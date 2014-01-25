@@ -692,6 +692,12 @@ open import Data.List public
 module List = Data.List
 \end{code}
 
+Why do we use lists instead of starting out with natural numbers and
+base the development on normal functors?
+
+The main reason is that we will use lists often and we want to avoid
+the encoding overhead for them.
+
 We also wanted the following but they are annoyingly large.
 
 \begin{code}
