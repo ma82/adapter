@@ -2,23 +2,36 @@
 
 # Order-preserving embeddings
 
+TODO. Move to AD.Sub or AD.List.Sub or similar, as there are now other
+constructions based on Sub.
+
 \begin{code}
-module AD.OPE lI where
+module AD.OPE where
 
 open import AD.Misc
 open import AD.Ix
-open Ix lI
 \end{code}
 
-We can define a class of morphisms for `List X`.
+TODO. Patterns for Two instead.
 
 \begin{code}
 data Embed? : Set where keep skip : Embed?
 
+−Embed? : Embed? → Embed?
+−Embed? keep = skip
+−Embed? skip = keep
+\end{code}
+
+## `Sub`
+
+\begin{code}
 module _ {l}{X : Set l} where
 
   Sub : List X → Set
-  Sub = HList (λ (_ : X) → Embed?)
+  Sub = □List λ _ → Embed?
+
+  −sub : ∀ {xs} → Sub xs → Sub xs
+  −sub = □List.map (nκ −Embed?) _
 
   ⟦_⟧Sub : ∀ {xs} → Sub xs → List X
   ⟦_⟧Sub {[]}     p          = []
@@ -29,17 +42,23 @@ module _ {l}{X : Set l} where
 [Ix] and Sub.
 
 \begin{code}
-  _Sub∋_ : ∀ {xs}(s : Sub xs)(j : Ix xs) → Set
-  _Sub∋_ {[]    } s           ()
-  _Sub∋_ {x ∷ xs} (keep , _) (|1  ) = ⊤
-  _Sub∋_ {x ∷ xs} (skip , _) (|1  ) = ⊥
-  _Sub∋_ {x ∷ xs} (e    , s) (|0 p) = s Sub∋ p
+  module _ {l} where
 
-  −Sub : ∀ {xs}(s : Sub xs){j : Ix xs} → Sub (− j)
-  −Sub {[]    }(    s) {}
-  −Sub {x ∷ xs}(_ , s) {|1  } = s
-  −Sub {x ∷ xs}(e , s) {|0 p} = e , −Sub s
+    open Ix l
+
+    _Sub∋_ : ∀ {xs}(s : Sub xs)(j : Ix xs) → Set
+    _Sub∋_ {[]    } s           ()
+    _Sub∋_ {x ∷ xs} (keep , _) (|1  ) = ⊤
+    _Sub∋_ {x ∷ xs} (skip , _) (|1  ) = ⊥
+    _Sub∋_ {x ∷ xs} (e    , s) (|0 p) = s Sub∋ p
+
+    sub− : ∀ {xs}(s : Sub xs){j : Ix xs} → Sub (− j)
+    sub− {[]    }(    s) {}
+    sub− {x ∷ xs}(_ , s) {|1  } = s
+    sub− {x ∷ xs}(e , s) {|0 p} = e , sub− s
 \end{code}
+
+## `_<∷_` (OPE)
 
 \begin{code}
   infix 4 _<∷_
@@ -128,7 +147,7 @@ TODO Implement _>>=Sub_ from _<∷∘_ ?
 Note that this `_<∷_` is not a propositional relation, for example we
 have two different OPEs of type
 
-    [1,2] <: [1,1,2,3]
+    [1,2] <∷ [1,1,2,3]
 
 \begin{code}
 test1 : (1 ∷ 2 ∷ []) <∷ 1 ∷ 1 ∷ 2 ∷ 3 ∷ []
