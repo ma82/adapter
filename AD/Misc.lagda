@@ -530,6 +530,12 @@ map⊎/ f g n = map⊎ (f n) (g n)
 data Dec? : Set where yes no : Dec?
 
 Dec = λ {l}(X : Set l) → Σ Dec? λ { yes → X ; no  → ¬ X }
+
+module Dec where
+
+  mappam : ∀ {l}{X Y : Set l} → (X → Y) → (Y → X) → Dec X → Dec Y
+  mappam f g (yes ,  x) = yes , f x
+  mappam f g (no  , ¬x) = no  , ¬x ∘ g
 \end{code}
 
 ## Functors
