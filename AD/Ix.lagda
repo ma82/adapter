@@ -62,8 +62,8 @@ TODO Prove `SplitsAs xs ps x ys ≅ xs ≡ ps ++ x ∷ ss`
 ## `Ix`
 
 \begin{code}
-pattern |1   = inl _
-pattern |0 x = inr x
+pattern |1    = inl _
+pattern |0_ x = inr x
 \end{code}
 
 TODO. Test!
@@ -172,6 +172,12 @@ TODO Prove it is a (relevant) partial order.
 \begin{code}
 ⋄List : ∀ {lP lX}{X : Set lX}(P : X → Set lP) → List X → Set lP
 ⋄List {lP} P xs = Σ (Ix xs) (P ∘ lookup) where open Ix lP
+\end{code}
+
+## Fin
+
+\begin{code}
+Fin = Ix.Ix Z ∘ toList
 \end{code}
 
 ## Zipper and Ix
