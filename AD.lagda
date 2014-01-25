@@ -8,8 +8,9 @@ other packages.
 \begin{code}
 module AD where
 
-open import AD.Misc    public
-open import AD.Ix      public
-open import AD.OPE     public
-open import AD.TagTree public
+open import AD.Misc                            public
+open import AD.Ix                              public
+open import AD.Manifest                        public
+open import AD.OPE                             public
+open import AD.TagTree                         public
 \end{code}
