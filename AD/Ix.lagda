@@ -81,6 +81,17 @@ module Ix lI {lX}{X : Set lX} where
   Ix : List X → Set lI
   Ix      []  = ⊥
   Ix (x ∷ xs) = ⊤ {lI} ⊎ Ix xs
+
+  _≟_ : ∀ {xs} → (i j : Ix xs) → Dec (i ≡ j)
+  _≟_ {[]    } ()
+  _≟_ {x ∷ xs} (inl i) (inl j) = yes , <>
+  _≟_ {x ∷ xs} (inl i) (inr j) = no , λ ()
+  _≟_ {x ∷ xs} (inr i) (inl j) = no , λ ()
+  _≟_ {x ∷ xs} (inr i) (inr j) with i ≟ j
+  _≟_ {x ∷ xs} (inr i) (inr ._) | yes , <>  = yes , <>
+  _≟_ {x ∷ xs} (inr i) (inr j ) | no  , f   = no , f ∘ inr-inv where
+    inr-inv : ∀ {i j : Ix xs} → inr i ≡ inr j → i ≡ j
+    inr-inv <> = <>
 \end{code}
 
 `Ix xs` implies that `xs` is non-empty.
