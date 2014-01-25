@@ -642,6 +642,15 @@ module _ where
                     , (∣ F ∣map-∘⇛ (n , xs) ⊚ ∣ F ∣map-id⇛ (n , xs))
 \end{code}
 
+### Families as containers
+
+\begin{code}
+Cont = λ lI l → Fam (Set l {- ^op -}) lI
+
+⟦_⟧Cont : ∀ {l lX} → Cont l lX → Set lX → Set (l ⊔ lX)
+⟦ S , P ⟧Cont X = Σ S λ s → P s → X
+\end{code}
+
 ## Abstract nonsense
 
 \begin{code}
