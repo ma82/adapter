@@ -1,3 +1,5 @@
+[2013-2014 Matteo Acerbi](https://www.gnu.org/licenses/gpl.html)
+
 ## Manifest type
 
 (aka "singleton").
@@ -10,12 +12,7 @@ module AD.Manifest where
 open import AD.Misc
 \end{code}
 
-We need a couple of patterns for later.
-
-\begin{code}
-pattern «_ x = inl _ , x
-pattern »_ x = inr _ , x
-\end{code}
+TODO Fix!
 
 \begin{code}
 module Manifest lM {lA} where
