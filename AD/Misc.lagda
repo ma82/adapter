@@ -488,8 +488,8 @@ module _ {lI lA lB}{I : ★ lI} where
       uc/ : ∀ i → ((a : A i)(b : B (, a)) → C (, , b)) → (Π _ (C ∘ ,_))
       uc/ i f (a , b) = f a b
 
-  Π/ : (A : Pow I lA)(B : Pow/ A lB) → ★ _
-  Π/ A = Π (Σ _ A)
+  Π/ : (A : Pow I lA)(B : Pow/ A lB) → Pow I _
+  Π/ A B i = Π (A i) (B ∘ ,_)
 
 infixr 4 _×/_
 
