@@ -722,7 +722,7 @@ module Cx {lU}{U : Set lU}{lEl}(El : Pow U lEl) where
 ### □List
 
 As we do not usually need so many dependencies we can obtain a
-(smaller) cons-ervative (right-nested) first-order list by induction.
+(smaller) first-order cons-list by induction.
 
 \begin{code}
 □List : ∀ {lI}{I : ★ lI}{lP} → Pow I lP → Pow (List I) lP
@@ -730,18 +730,36 @@ As we do not usually need so many dependencies we can obtain a
 □List P (i ∷ is) = P i × □List P is
 \end{code}
 
-When we call predicates "indexed types" we choose different variable
-names and we refer to the above as "heterogeneous list".
-
 \begin{code}
-HList : ∀ {lI}{I : ★ lI}{l}(X : Pow I l) → Pow (List I) l
-HList = □List
+module □List {lI}{I : ★ lI}{lP}{P : Pow I lP} where
+
+  map : ∀ {lQ}{Q : Pow I lQ} → P ⇛ Q → □List P ⇛ □List Q
+  map f []             _  = _
+  map f (x ∷ xs) (ps , p) = f x ps , map f xs p
+
+  module _ {lC}{C : Pow (Σ _ (□List P)) lC} where
+
+    elim : C ([] , _) →
+           (∀ x xs p ps → C (xs , ps) → C (x ∷ xs , p , ps)) →
+           ∀ x → C x
+    elim m[] m∷ ([]     ,      _) = m[]
+    elim m[] m∷ (x ∷ xs , p , ps) = m∷ _ _ _ _ (elim m[] m∷ (xs , ps))
 \end{code}
 
-We defined `HList` by recursion to keep it as small as the contained
-data, independently of the universe level of the index list.
+Star is often useful.
 
-TODO Star?
+TODO. Prove iso with the one from the standard library.
+
+\begin{code}
+module _ {lA lR : Level}{A : ★ lA} where
+
+  chain : A → A → List A → List (A × A)
+  chain b e []       = (b , e) ∷ []
+  chain b e (x ∷ xs) = (b , x) ∷ chain x e xs
+
+  _[_]✰_ : A → (A → Pow A lR) → A → Set _
+  x [ R ]✰ y = Σ (List A) (□List (uc R) ∘ chain x y)
+\end{code}
 
 ## Natural numbers
 
