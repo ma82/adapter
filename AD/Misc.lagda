@@ -800,13 +800,41 @@ numbers (for example, the bidirectional elaboration of numerals), so
 we resort to importing `Data.Nat`.
 
 \begin{code}
-open import Data.Nat public using (ℕ ; zero ; suc ; _+_ ; _*_ ; _≟_)
+open import Data.Nat public using (ℕ ; zero ; suc ; _+_ ; _*_)
 module ℕ = Data.Nat
 
 private example : 3 * 2 ≡ 6 ; example = <>
 \end{code}
 
-## Other stuff
+Vectors.
+
+\begin{code}
+toList : ℕ → ℕ=List⊤.ℕ
+toList zero    = ℕ=List⊤.zero
+toList (suc n) = ℕ=List⊤.suc (toList n)
+
+Vec = λ {l}(X : Set l) → □List (λ _ → X) ∘ toList
+\end{code}
+
+TODO Move somewhere else.
+
+Normal functor codes and their semantics.
+
+\begin{code}
+Normal : ∀ lA → Set _
+Normal lA = Σ (Set lA) λ A → A → ℕ
+
+⟦_⟧N : ∀ {lA} → Normal lA → ∀ {l} → Set l → Set (l ⊔ lA)
+⟦ A , ∣_∣ ⟧N X = Σ A (Vec X ∘ ∣_∣)
+
+-- TODO Fin is in Ix
+module Normal (Fin : ∀ {l} → ℕ → Set l) where
+
+  toCont : ∀ {l} → Normal l → Cont l (S l)
+  toCont (A , ∣_∣) = A , Fin ∘ ∣_∣
+\end{code}
+
+## At-key
 
 \begin{code}
 module _ {lI}{I : ★ lI} where
