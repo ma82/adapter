@@ -93,8 +93,7 @@ Standard library's equality.
 
 \begin{code}
 open import Relation.Binary.PropositionalEquality public
---  using    (cong ; cong₂ ; subst ; subst₂ ; inspect)
-  using (inspect ; refl) renaming (_≡_ to _==_) -- ; refl to <> ; [_] to «_»)
+  using (inspect ; refl) renaming (_≡_ to _==_)
 module ≡ = Relation.Binary.PropositionalEquality
 \end{code}
 
@@ -674,13 +673,11 @@ module ANS {lO}{O : Set lO}{lN}{N : Set lN}(f : O → N){l} where
 
 ## `Maybe`
 
-TODO. Switch to `_⊎_ ⊤`? Call it 1+?
-
 \begin{code}
 open import Data.Maybe public
   using    ()
-  renaming (Maybe to ¿_ ; just to ¡ ; nothing to ε)
-module ¿ = Data.Maybe
+  renaming (Maybe to 1+_ ; just to ¡ ; nothing to ε)
+module 1+ = Data.Maybe
 \end{code}
 
 ## Lists
@@ -697,14 +694,6 @@ base the development on normal functors?
 
 The main reason is that we will use lists often and we want to avoid
 the encoding overhead for them.
-
-We also wanted the following but they are annoyingly large.
-
-\begin{code}
--- open import Data.List.Any as A public
--- module ListAny = A
--- module List∈   = Membership-≡
-\end{code}
 
 ### Contexts
 
@@ -754,7 +743,7 @@ module □List {lI}{I : ★ lI}{lP}{P : Pow I lP} where
 
 Star is often useful.
 
-TODO. Prove iso with the one from the standard library.
+TODO. Prove it isomorphic to the one from the standard library.
 
 \begin{code}
 module _ {lA lR : Level}{A : ★ lA} where

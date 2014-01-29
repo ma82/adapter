@@ -2,9 +2,6 @@
 
 # Standard Library adapter
 
-We make all names available at the same time, to simplify imports from
-other packages.
-
 \begin{code}
 module AD where
 
