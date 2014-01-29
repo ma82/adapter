@@ -11,16 +11,13 @@ open import AD
 module Assignment {lT}{T : Set lT}{lA}(A : List T → Set lA) where
 \end{code}
 
-For example `a` is an agent which must carry out tasks `r1` and r2`.
+For example `a` is an agent which must carry out tasks `t1` and t2`.
 
-    a : A (r1 ∷ r2 ∷ [])
+    a : A (t1 ∷ t2 ∷ [])
 
 We want to define a family of **assignments** indexed by a lists of
 tasks, under the constraint that exactly one agent is assigned to each
 of the tasks.
-
-Note that assignments are not partitions as we allow to assign zero
-tasks to agents.
 
 We can model assignments as a dependent tuple composed of the number
 of agents, a finite map from tasks to agent identifiers, and the
@@ -108,11 +105,11 @@ Assignment = Σ _ ∘ Assignment/
 ## Tests
 
 \begin{code}
-module SimpleTransfer (send : ∀ {rs} → (i : Ix rs) → A rs    → A (− i))
-                      (recv : ∀ {rs} → (i : Ix rs) → A (− i) → A rs   )
+module SimpleTransfer (send : ∀ {ts} → (i : Ix ts) → A ts    → A (− i))
+                      (recv : ∀ {ts} → (i : Ix ts) → A (− i) → A ts   )
                       where
 
-  swap2 : ∀ {r} → Assignment/ (r ∷ []) 2 → Assignment/ (r ∷ []) 2
+  swap2 : ∀ {t} → Assignment/ (t ∷ []) 2 → Assignment/ (t ∷ []) 2
   -- a1 is assigned the task, we reassign it to a2
   swap2 ((|1       , _) , a1 , a2 , _) = (|0 |1 , _) , send |1 a1 , recv |1 a2 , _
   -- a2 is assigned the task, we reassign it to a1
@@ -120,5 +117,15 @@ module SimpleTransfer (send : ∀ {rs} → (i : Ix rs) → A rs    → A (− i)
   -- there are no more possibilities
   swap2 ((|0 |0 () , _) , a1 , a2 , _)
 \end{code}
+
+* TODO The above is "wrong".
+
+Or, at least, it does not really correspond to the description.
+
+(Fortunately) lists are not finite sets ("buckets").
+
+Here an `Assignment (t1 ∷ t2 ∷ ts)` has no way to contain an agent of type `A (t2 ∷ t1 ∷ [])`.
+
+It makes sense when ∀ xs (p : Permutation xs) → A xs ≅ A ⟦ p ⟧, but I did not assume this.
 
 * TODO Prior art? Better alternatives?
