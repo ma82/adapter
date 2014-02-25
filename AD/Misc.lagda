@@ -322,6 +322,19 @@ Two {l} = ⊤ {l} ⊎ ⊤ {l}
 
 [2] : Set
 [2] = Two
+
+pattern «_ x = inl _ , x
+pattern »_ x = inr _ , x
+
+module _ {lX}{X : ★ lX}{lY}{Y : ★ lY}{lZ}{Z : (X ⊎ Y) → ★ lZ} where
+
+ «-inj : {a : X}{b : Z (inl a)}{c : Z (inl a)} → 
+         Id (Σ (X ⊎ Y) Z) (inl a , b) (inl a , c) → b ≡ c
+ «-inj <> = <>
+
+ »-inj : {a : Y}{b : Z (inr a)}{c : Z (inr a)} → 
+         Id (Σ (X ⊎ Y) Z) (inr a , b) (inr a , c) → b ≡ c
+ »-inj <> = <>
 \end{code}
 
 ### Dependent coproduct and equality

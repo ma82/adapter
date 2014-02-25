@@ -58,11 +58,7 @@ TODO Needed?
 \end{code}
 
 \begin{code}
-pattern «_ x = inl _ , x
-pattern »_ x = inr _ , x
-\end{code}
-
-\begin{code}
 pattern injL a b = « a , b
 pattern injR a b = » a , b
 \end{code}
+
