@@ -149,10 +149,10 @@ uip = UIP.uip _ _
 TODO Remove cong
 
 \begin{code}
-_$≡_ : ∀ {lA lB}{A : ★ lA}{B : ★ lB}(f : A → B) {x y} → x ≡ y → f x ≡ f y
-f $≡ <> = <>
+infixr 5 _$≡_
 
-cong = _$≡_
+_$≡_ : ∀ {lA lB}{A : ★ lA}{B : ★ lB}(f : A → B){x y} → x ≡ y → f x ≡ f y
+f $≡ <> = <>
 
 coe : ∀ {l}{A B : ★ l} → A ≡ B → A → B
 coe <> = id
@@ -278,7 +278,7 @@ A Ext l1 , l2 →≅ B = PseudoIso A (λ x y → x Ext l1 , l2 →≡ y)
 
 \begin{code}
 ↓ext : ∀ {a₁ b₁} a₂ b₂ → Ext (a₁ ⊔ a₂) (b₁ ⊔ b₂) → Ext a₁ b₁
-↓ext a₂ b₂ ext f≡g = (λ h → ↓_ ∘ h ∘ ↑_) $≡ ext (cong (↑_ {ℓ = b₂}) ∘ f≡g ∘ ↓_ {ℓ = a₂})
+↓ext a₂ b₂ ext f≡g = (λ h → ↓_ ∘ h ∘ ↑_) $≡ ext (_$≡_ (↑_ {ℓ = b₂}) ∘ f≡g ∘ ↓_ {ℓ = a₂})
 
 ext : {{e : ∀ {l1 l2} → Ext l1 l2}} → ∀ {l1 l2} → Ext l1 l2
 ext {{e}} = e
