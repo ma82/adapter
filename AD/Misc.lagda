@@ -580,12 +580,22 @@ record Functor {lI}(O N : ★ lI)(lC lD : _) : ★ (S lD ⊔ S lC ⊔ lI) where
   open RawFunctor RF public
 
   field
-    ∣_∣map-id⇛  : {X : Pow O lC} →
-                 ∣_∣map id⇛ ⇛≡ id⇛ {X = ∣_∣ X}
-    ∣_∣map-∘⇛   : {X Y Z : Pow O lC}{g : X ⇛ Y}{f : Y ⇛ Z} →
-                 ∣_∣map f ∘⇛ ∣_∣map g ⇛≡ ∣_∣map (f ∘⇛ g)
-    ∣_∣map-cong : {X Y : Pow O lC}{f g : X ⇛ Y} → 
-                 f ⇛≡ g → ∣_∣map f ⇛≡ ∣_∣map g
+    ∣_∣map-id⇛ : {X : Pow O lC} →
+                ∣_∣map id⇛ ⇛≡ id⇛ {X = ∣_∣ X}
+    ∣_∣map-∘⇛  : {X Y Z : Pow O lC}{g : X ⇛ Y}{f : Y ⇛ Z} →
+                ∣_∣map f ∘⇛ ∣_∣map g ⇛≡ ∣_∣map (f ∘⇛ g)
+
+record FunctorAp {lI}(O N : ★ lI)(lC lD : _) : ★ (S lD ⊔ S lC ⊔ lI) where
+  constructor mk
+
+  field
+    F : Functor {lI} O N lC lD
+
+  open Functor F public
+
+  field
+    ∣_∣map-ap : {X Y : Pow O lC}{f g : X ⇛ Y} → 
+               f ⇛≡ g → ∣_∣map f ⇛≡ ∣_∣map g
 \end{code}
 
 ### Natural transformations
