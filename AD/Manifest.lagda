@@ -29,6 +29,9 @@ we can obtain it as follows.
   record _[∋]_ (A : ★ lA)(a : A) : Set lM where
     constructor []
 
+  ]_[ : ∀ {A : ★ lA}{a} → A [∋] a → A
+  ]_[ {a = a} _ = a
+
   [[_]] : ∀ {A : ★ lA} → (a : A) → A [∋] a
   [[ a ]] = []
 \end{code}
