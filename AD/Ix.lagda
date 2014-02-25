@@ -130,12 +130,30 @@ TODO Is this efficient?
   lookup : ∀ {xs} → Ix xs → X
   lookup = fst ∘ snd ∘ Ix→IX
 
+  lookup□ : ∀ {xs lP}{P : X → Set lP} → (i : Ix xs) → □List P xs → P (lookup i)
+  lookup□ {[]    } () _
+  lookup□ {x ∷ xs} (|1  ) (p ,  _) = p
+  lookup□ {x ∷ xs} (|0 i) (p , ps) = lookup□ i ps
+
   prefix suffix : ∀ {xs} → Ix xs → List X
   prefix =             fst ∘ Ix→IX
   suffix = fst ∘ snd ∘ snd ∘ Ix→IX
 
   − : ∀ {xs} → Ix xs → List X
   − i = prefix i ++ suffix i
+
+  [_/_] : ∀ {xs} → X → Ix xs → List X
+  [ x / i ] = prefix i ++ x ∷ suffix i
+
+  ix[/_] : ∀ {xs x} → (i : Ix xs) → Ix [ x / i ]
+  ix[/_] {[]    } ()
+  ix[/_] {x ∷ xs} (|1  ) = |1
+  ix[/_] {x ∷ xs} (|0 i) = |0 (ix[/ i ])
+\end{code}
+
+\begin{code}
+  ⋄List : ∀ {lP}(P : X → Set lP) → List X → Set _
+  ⋄List P xs = Σ (Ix xs) (P ∘ lookup)
 \end{code}
 
 We can so define membership, which will also be "small".
@@ -144,15 +162,22 @@ We can so define membership, which will also be "small".
   infix 3 _∈_
 
   _∈_ : X → List X → Set lI
-  x ∈ xs = Σ (Ix xs) λ i → lookup i ≡ x  
+  x ∈ xs = ⋄List (≡ x) xs
 \end{code}
 
-\begin{code}
-  |Z : ∀ {x xs} → x ∈ x ∷ xs
-  |Z = |1 , <>
+-- \begin{code}
+--   |Z : ∀ {x xs} → x ∈ x ∷ xs
+--   |Z = |1 , <>
 
-  >S : ∀ {x xs} → x ∈ xs → x ∈ x ∷ xs
-  >S (i , p) = |0 i , p
+--   |S : ∀ {x xs} → x ∈ xs → x ∈ x ∷ xs
+--   |S (i , p) = |0 i , p
+-- \end{code}
+
+\begin{code}
+  ∈[/_] : ∀ {xs x} → (i : Ix xs) → x ∈ [ x / i ]
+  ∈[/_] {[]   } ()
+  ∈[/_] {_ ∷ _} (|1  ) = |1 , <>
+  ∈[/_] {_ ∷ _} (|0 i) = let j , p = ∈[/_] i in |0 j , p
 \end{code}
 
 ## Order
@@ -167,19 +192,8 @@ thus:
 
 TODO Prove it is a (relevant) partial order.
 
-## ⋄List
-
-\begin{code}
-⋄List : ∀ {lP lX}{X : Set lX}(P : X → Set lP) → List X → Set lP
-⋄List {lP} P xs = Σ (Ix xs) (P ∘ lookup) where open Ix lP
-\end{code}
-
 ## Fin
 
 \begin{code}
 Fin = Ix.Ix Z ∘ toList
 \end{code}
-
-## Zipper and Ix
-
-TODO
