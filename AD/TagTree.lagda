@@ -31,7 +31,8 @@ module ⟦⟧Tree {lA}{A : ★ lA}{lI : Level} where
 
   ⟦_⟧Tree▻ : Tree▻ → ★ lI
   ⟦ []                 ⟧Tree▻ = ⊤
-  ⟦ (a , l) ** (b , r) ⟧Tree▻ = Σ (a +∋ b) ⊎.[ nκ ⟦ l ⟧Tree▻ , nκ ⟦ r ⟧Tree▻ ]
+  ⟦ (a , l) ** (b , r) ⟧Tree▻ = Σ (a +∋ b)
+                                  ⊎.[ nκ ⟦ l ⟧Tree▻ , nκ ⟦ r ⟧Tree▻ ]
 
   ⟦_⟧Tree► : Tree► → ★ lI
   ⟦ _ , t ⟧Tree► = ⟦ t ⟧Tree▻

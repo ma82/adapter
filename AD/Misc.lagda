@@ -487,7 +487,7 @@ module _ {lI lA lB}{I : ★ lI} where
   Σ/ : (A : Pow I lA)(B : Pow/ A lB) → Pow I _
   Σ/ A B i = Σ (A i) (B ∘ ,_)
 
-  module _ {A : Pow I lA}{B : Pow/ A lB} where
+  module Σ/ {A : Pow I lA}{B : Pow/ A lB} where
 
     fst/ : Σ/ A B ⇛ A
     fst/ _ = fst
@@ -502,6 +502,8 @@ module _ {lI lA lB}{I : ★ lI} where
 
       uc/ : ∀ i → ((a : A i)(b : B (, a)) → C (, , b)) → (Π _ (C ∘ ,_))
       uc/ i f (a , b) = f a b
+
+  open Σ/ public
 
   Π/ : (A : Pow I lA)(B : Pow/ A lB) → Pow I _
   Π/ A B i = Π (A i) (B ∘ ,_)

@@ -150,15 +150,18 @@ have two different OPEs of type
     [1,2] <∷ [1,1,2,3]
 
 \begin{code}
-test1 : (1 ∷ 2 ∷ []) <∷ 1 ∷ 1 ∷ 2 ∷ 3 ∷ []
-test1 = (keep , skip , keep , skip , _) , <>
+private
+  test1 : (1 ∷ 2 ∷ []) <∷ 1 ∷ 1 ∷ 2 ∷ 3 ∷ []
+  test1 = (keep , skip , keep , skip , _) , <>
 
-test2 : (1 ∷ 2 ∷ []) <∷ 1 ∷ 1 ∷ 2 ∷ 3 ∷ []
-test2 = (skip , keep , keep , skip , _) , <>
+  test2 : (1 ∷ 2 ∷ []) <∷ 1 ∷ 1 ∷ 2 ∷ 3 ∷ []
+  test2 = (skip , keep , keep , skip , _) , <>
+\end{code}
 
+\begin{code}
 not-prop : (∀ {l}{X : Set l}{xs ys : List X} → IsProp (xs <∷ ys)) → [0]
 not-prop f with f test1 test2
-not-prop f    | ()
+not-prop f | ()
 \end{code}
 
 TODO Category laws
