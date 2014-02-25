@@ -64,6 +64,9 @@ data   ⊥ {l} : ★ l where
 
 ⊥-elim : ∀ {l1 l2}{P : ⊥ → ★ l2} → (x : ⊥ {l1}) → P x
 ⊥-elim ()
+
+magic : ∀ {l1 l2}{A : ★ l2} → ⊥ {l1} → A
+magic = ⊥-elim
 \end{code}
 
 ## Unit type
