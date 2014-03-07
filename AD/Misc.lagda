@@ -426,7 +426,7 @@ module Π≅PowΠ {lA}(A : ★ lA){lB}(B : Pow A lB) where
 Pow/ : ∀ {lI lX}{I : ★ lI}(X : Pow I lX) lP → ★ (S lP ⊔ lX ⊔ lI)
 Pow/ X = Pow (Σ _ X)
 
-Set^/ = Pow/
+Set^Σ = Pow/
 
 module _ {lI lX lY lP lQ}{I : ★ lI}{X : Pow I lX}{Y : Pow I lY} where
 
