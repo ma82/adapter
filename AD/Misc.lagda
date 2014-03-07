@@ -181,14 +181,12 @@ TODO Derive ap₂ from Σ≡≅≡
 \begin{code}
 module _ {lA}{A : Set lA} where
 
-  private IdA = Id A
-
   infixr 4 _⊚_
 
-  _⊚_ : IsTrans IdA 
+  _⊚_ : IsTrans (Id A)
   _⊚_ <> = id
 
-  !_ : IsSym IdA
+  !_ : IsSym (Id A)
   ! <> = <>
 
 ap₂ : ∀ {lA}{A : ★ lA}{lB}{B : ★ lB}{lC}{C : ★ lC}(f : A → B → C){x w y z} →
@@ -214,11 +212,6 @@ record PseudoIso {lA }(A : Set lA)
         fr       : B → A
         fr∘to≡id : (fr ∘ to) ≈A id
         to∘fr≡id : (to ∘ fr) ≈B id
-
--- reflPI : ∀ {lA}{A : Set lA}{l≈A}{_≈A_ : (A → A) → (A → A) → Set l≈A} → IsRefl _≈A_ → 
---          ∀ {lB}{B : Set lB}{l≈B}{_≈B_ : (B → B) → (B → B) → Set l≈B} → IsRefl _≈B_ →
---          IsRefl (λ A B → PseudoIso A _≈A_ B _≈B_)
--- reflPI = {!!}
 
 infix 1 _≅_
 
@@ -381,6 +374,8 @@ TODO. Change notation for Pow everywhere... Maybe ★^ ?
 Pow : ∀ {lX}(X : ★ lX) l → ★ (S l ⊔ lX)
 Pow X l = (x : X) → ★ l
 
+Set^  = Pow
+
 infixr 2 _➨_ _⇛_ _⇨_
 
 _⇨_ : ∀ {l1 l2 l3}{I : ★ l1} → Pow I l2 → Pow I l3 → Pow I _
@@ -430,6 +425,8 @@ module Π≅PowΠ {lA}(A : ★ lA){lB}(B : Pow A lB) where
 \begin{code}
 Pow/ : ∀ {lI lX}{I : ★ lI}(X : Pow I lX) lP → ★ (S lP ⊔ lX ⊔ lI)
 Pow/ X = Pow (Σ _ X)
+
+Set^/ = Pow/
 
 module _ {lI lX lY lP lQ}{I : ★ lI}{X : Pow I lX}{Y : Pow I lY} where
 
