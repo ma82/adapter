@@ -159,7 +159,7 @@ private
 \end{code}
 
 \begin{code}
-not-prop : (∀ {l}{X : Set l}{xs ys : List X} → IsProp (xs <∷ ys)) → [0]
+not-prop : (∀ {l}{X : Set l}{xs ys : List X} → IsProp (xs <∷ ys)) → ⊥Z
 not-prop f with f test1 test2
 not-prop f | ()
 \end{code}

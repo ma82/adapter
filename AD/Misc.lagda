@@ -57,10 +57,10 @@ nκ x _ = x
 
 \begin{code}
 data   ⊥ {l} : ★ l where
-[0]  = ⊥ {Z}
+⊥Z = ⊥ {Z}
 
 ¬_ : ∀ {l} → Set l → Set l
-¬ A = A → [0]
+¬ A = A → ⊥Z
 
 ⊥-elim : ∀ {l1 l2}{P : ⊥ → ★ l2} → (x : ⊥ {l1}) → P x
 ⊥-elim ()
@@ -73,7 +73,7 @@ magic = ⊥-elim
 
 \begin{code}
 record ⊤ {l} : ★ l where constructor tt
-[1]  = ⊤ {Z}
+⊤Z  = ⊤ {Z}
 \end{code}
 
 ## Relations
@@ -313,8 +313,8 @@ module ⊎ = Data.Sum
 Two : ∀ {l} → ★ l
 Two {l} = ⊤ {l} ⊎ ⊤ {l}
 
-[2] : Set
-[2] = Two
+TwoZ : Set
+TwoZ = Two
 
 pattern «_ x = inl _ , x
 pattern »_ x = inr _ , x
@@ -405,7 +405,7 @@ TODO. A better name for this?
 
 \begin{code}
 PowΠ : ∀ {l1 l2}(X : ★ l1) → Pow X l2 → ★ _
-PowΠ A B = nκ [1] ⇒ B
+PowΠ A B = nκ ⊤Z ⇒ B
 \end{code}
 
 \begin{code}
@@ -469,11 +469,17 @@ module _ {lI}{I : ★ lI  }
 ⊥/ : ∀ {l2 l1}{I : ★ l1} → Pow I l2
 ⊥/ _ = ⊥
 
+⊥Z/ : ∀ {lI}{I : ★ lI} → Pow I Z
+⊥Z/ = ⊥/
+
 magic/ : ∀ {l1 l2 l3}{I : ★ l1}{X : Pow I l3} → ⊥/ {l2} ⇛ X
 magic/ _ = ⊥-elim
 
 ⊤/ : ∀ {l2 l1}{I : ★ l1} → Pow I l2
 ⊤/ _ = ⊤
+
+⊤Z/ : ∀ {lI}{I : ★ lI} → Pow I Z
+⊤Z/ = ⊤/
 \end{code}
 
 ### Σ and Π over predicates
@@ -880,7 +886,7 @@ module _ {l} where
 
 \begin{code}
   module 1Point (points : List ★∙)(offset : ℕ) where
-    #0 = points !!! offset
+      #0 = points !!! offset
 
   module 2Points (points : List ★∙)(offset : ℕ) where
     open 1Point points (      offset) public
