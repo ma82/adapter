@@ -11,8 +11,8 @@ open import AD.Misc
 ## `SplitsAs`
 
 First we compute a (small, propositional) predicate corresponding to
-the quaternary relation between a (non-empty) list, one of its
-prefixes, the element right after that, and the remaining suffix.
+the quaternary relation among a (non-empty) list, one of its prefixes,
+the element right after that, and the remaining suffix.
 
 \begin{code}
 module _ {l}{X : Set l} where
@@ -89,9 +89,9 @@ module Ix lI {lX}{X : Set lX} where
   _≟_ {x ∷ xs} (inr i) (inl j) = no , λ ()
   _≟_ {x ∷ xs} (inr i) (inr j) with i ≟ j
   _≟_ {x ∷ xs} (inr i) (inr ._) | yes , <>  = yes , <>
-  _≟_ {x ∷ xs} (inr i) (inr j ) | no  , f   = no , f ∘ inr-inv where
-    inr-inv : ∀ {i j : Ix xs} → inr i ≡ inr j → i ≡ j
-    inr-inv <> = <>
+  _≟_ {x ∷ xs} (inr i) (inr j ) | no  , f   = no  , f ∘ inr-inj where
+    inr-inj : ∀ {i j : Ix xs} → inr i ≡ inr j → i ≡ j
+    inr-inj <> = <>
 \end{code}
 
 `Ix xs` implies that `xs` is non-empty.
@@ -130,7 +130,7 @@ TODO Is this efficient?
   lookup : ∀ {xs} → Ix xs → X
   lookup = fst ∘ snd ∘ Ix→IX
 
-  lookup□ : ∀ {xs lP}{P : X → Set lP} → (i : Ix xs) → □List P xs → P (lookup i)
+  lookup□ : ∀ {xs lP}{P : X → Set lP}(i : Ix xs) → □List P xs → P (lookup i)
   lookup□ {[]    } () _
   lookup□ {x ∷ xs} (|1  ) (p ,  _) = p
   lookup□ {x ∷ xs} (|0 i) (p , ps) = lookup□ i ps
@@ -162,7 +162,7 @@ We can so define membership, which will also be "small".
   infix 3 _∈_
 
   _∈_ : X → List X → Set lI
-  x ∈ xs = ⋄List (≡ x) xs
+  _∈_ = ⋄List ∘ _≡_
 \end{code}
 
 -- \begin{code}
@@ -190,7 +190,24 @@ thus:
   xs ⊢ x << y = Σ (x ∈ xs) (_∈_ y ∘ suffix ∘ fst)
 \end{code}
 
-TODO Prove it is a (relevant) partial order.
+TODO Prove it is a category.
+
+## Search
+
+\begin{code}
+module Search l where
+
+  open Ix l
+
+  instance
+
+    here : ∀ {lA}{A : Set lA}{x : A}{xs} → x ∈ (x ∷ xs)
+    here = Z|
+
+    there : ∀ {lA}{A : Set lA}{x y : A}{xs}⦃ p : x ∈ xs ⦄ → x ∈ (y ∷ xs)
+    there ⦃ p ⦄ = S> snd p
+\end{code}
+
 
 ## Fin
 

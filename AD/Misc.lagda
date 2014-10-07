@@ -316,6 +316,9 @@ Two {l} = ⊤ {l} ⊎ ⊤ {l}
 TwoZ : Set
 TwoZ = Two
 
+pattern true  = inl _
+pattern false = inr _
+
 pattern «_ x = inl _ , x
 pattern »_ x = inr _ , x
 
@@ -864,55 +867,4 @@ module _ {lI}{I : ★ lI} where
 
   [κ_:=_] : Set lI → I → Pow I lI
   [κ_:=_] X i = [ (λ (i : _) → X) := i ]
-\end{code}
-
-## Sorry
-
-\begin{code}
-module _ {l} where
-
-  open Pointed l
-
-  _!!!_Ty : List ★∙ → ℕ → Set _
-  []       !!! n     Ty = ⊤
-  (x ∷ xs) !!! zero  Ty = fst x
-  (x ∷ xs) !!! suc n Ty = xs !!! n Ty
-
-  _!!!_ : (xs : List ★∙) → (i : ℕ) → xs !!! i Ty
-  []       !!! i     = tt
-  (x ∷ xs) !!! zero  = snd x
-  (x ∷ xs) !!! suc i = xs !!! i
-\end{code}
-
-\begin{code}
-  module 1Point (points : List ★∙)(offset : ℕ) where
-      #0 = points !!! offset
-
-  module 2Points (points : List ★∙)(offset : ℕ) where
-    open 1Point points (      offset) public
-    open 1Point points (1 ℕ.+ offset) public renaming (#0 to #1)
-
-  module 4Points (points : List ★∙)(offset : ℕ) where
-    open 2Points points (      offset) public
-    open 2Points points (2 ℕ.+ offset) public
-      renaming (#0 to #2 ; #1 to #3)
-
-  module 8Points (points : List ★∙)(offset : ℕ) where
-    open 4Points points (      offset) public
-    open 4Points points (4 ℕ.+ offset) public
-      renaming (#0 to #4 ; #1 to #5 ; #2 to #6 ; #3 to #7)
-
-  module 16Points (points : List ★∙)(offset : ℕ) where
-    open 8Points points (      offset) public
-    open 8Points points (8 ℕ.+ offset) public
-      renaming (#0 to #8  ; #1 to #9  ; #2 to #10 ; #3 to #11
-               ;#4 to #12 ; #5 to #13 ; #6 to #14 ; #7 to #15)
-
-  module 32Points (points : List ★∙)(offset : ℕ) where
-    open 16Points points (       offset) public
-    open 16Points points (16 ℕ.+ offset) public
-      renaming (#0  to #16 ; #1  to #17 ; #2  to #18 ; #3  to #19
-               ;#4  to #20 ; #5  to #21 ; #6  to #22 ; #7  to #23
-               ;#8  to #24 ; #9  to #25 ; #10 to #26 ; #11 to #27
-               ;#12 to #28 ; #13 to #29 ; #14 to #30 ; #15 to #31)
 \end{code}
