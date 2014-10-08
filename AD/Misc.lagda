@@ -697,14 +697,6 @@ module ANS {lO}{O : Set lO}{lN}{N : Set lN}(f : O → N){l} where
   ΠF X n = Π (f ⁻¹ n) (X ∘ fst)
 \end{code}
 
-\begin{code}
-  pam : Fam N l → Fam O (l ⊔ lO)
-  pam (X , k) = Σ X (_⁻¹_ f ∘ k) , fst ∘ snd
-
-  map : Fam O l → Fam N l
-  map (X , k) = X , f ∘ k
-\end{code}
-
 ## `Maybe`
 
 \begin{code}
