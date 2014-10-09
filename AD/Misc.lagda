@@ -547,6 +547,18 @@ map⊎/ f g n = map⊎ (f n) (g n)
 [ α , β ]/ i = ⊎.[ α i , β i ]
 \end{code}
 
+## At-key
+
+\begin{code}
+module _ {lI}{I : ★ lI} where
+
+  [_:=_] : ∀ {lX} → Pow I lX → I → Pow I lX
+  [ X := i ] = ≡ i ×/ X
+
+  [κ_:=_] : ∀ {lX} → Set lX → I → Pow I lX
+  [κ_:=_] X i = [ (λ (i : _) → X) := i ]
+\end{code}
+
 ## Decidable types
 
 \begin{code}
@@ -849,14 +861,3 @@ module Normal (Fin : ∀ {l} → ℕ → Set l) where
   toCont (A , ∣_∣) = A , Fin ∘ ∣_∣
 \end{code}
 
-## At-key
-
-\begin{code}
-module _ {lI}{I : ★ lI} where
-
-  [_:=_] : Pow I lI → I → Pow I lI
-  [ X := i ] = ≡ i ×/ X
-
-  [κ_:=_] : Set lI → I → Pow I lI
-  [κ_:=_] X i = [ (λ (i : _) → X) := i ]
-\end{code}
