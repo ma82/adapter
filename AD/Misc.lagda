@@ -333,7 +333,7 @@ module _ {lX}{X : ★ lX}{lY}{Y : ★ lY}{lZ}{Z : (X ⊎ Y) → ★ lZ} where
  »-inj <> = <>
 \end{code}
 
-### Dependent coproduct and equality
+### Dependent coproduct and (propositional) equality
 
 \begin{code}
 module _ {lA}{A : ★ lA}{lB}{B : A → ★ lB} where
@@ -342,12 +342,13 @@ module _ {lA}{A : ★ lA}{lB}{B : A → ★ lB} where
   (x , y) Σ≡ (z , w) = Σ (x ≡ z) λ p → rew _ p y ≡ w
 
   Σ≡→≡ : ∀ {p q} → p Σ≡ q → p  ≡ q
-  ≡→Σ≡ : ∀ {p q} → p  ≡ q → p Σ≡ q
   Σ≡→≡ (<> , <>) =      <>
+
+  ≡→Σ≡ : ∀ {p q} → p  ≡ q → p Σ≡ q
   ≡→Σ≡       <>  = <> , <>
 
   Σ≡≅≡ : ∀ {p q} → p Σ≡ q Π≅ p ≡ q
-  Σ≡≅≡ = iso Σ≡→≡ ≡→Σ≡ fr∘to λ _ → uip where
+  Σ≡≅≡ = iso Σ≡→≡ ≡→Σ≡ fr∘to (λ _ → uip) where
     fr∘to : ∀ {p q} → ≡→Σ≡ ∘ Σ≡→≡ Π≡ id {A = p Σ≡ q}
     fr∘to (<> , <>) = <>
 \end{code}
@@ -358,13 +359,19 @@ module _ {lA}{A : ★ lA}{lB}{B : A → ★ lB} where
 module Pointed l where
 
   ★∙ = Σ (★ l) id
+
+  type : ★∙ → Set l
+  type = fst
+
+  element : (X,x : ★∙) → type X,x
+  element = snd
 \end{code}
 
 ### Heterogeneous equality
 
 \begin{code}
-  _jm≡_ : {A B : ★ l} → A → B → Set
-  a jm≡ b = Id ★∙ (, a) (, b)
+_jm≡_ : ∀ {l}{A B : ★ l} → A → B → Set
+a jm≡ b = Id (Pointed.★∙ _) (, a) (, b)
 \end{code}
 
 ## Predicates (`Pow`)
@@ -372,6 +379,7 @@ module Pointed l where
 Contravariant powerset functor.
 
 TODO. Change notation for Pow everywhere... Maybe ★^ ?
+TODO. Remove Set^
 
 \begin{code}
 Pow : ∀ {lX}(X : ★ lX) l → ★ (S l ⊔ lX)
@@ -516,7 +524,7 @@ module _ {lI lA lB}{I : ★ lI} where
 
 infixr 4 _×/_
 
-_×/_ : ∀ {lI}{I : ★ lI}{lX}(X : Pow I lX){lY}(Y : Pow I lY) → I → ★ _
+_×/_ : ∀ {lI}{I : ★ lI}{lX lY}(X : Pow I lX)(Y : Pow I lY) → I → ★ _
 (X ×/ Y) i = X i × Y i
 \end{code}
 
@@ -555,7 +563,7 @@ module _ {lI}{I : ★ lI} where
   [_:=_] : ∀ {lX} → Pow I lX → I → Pow I lX
   [ X := i ] = ≡ i ×/ X
 
-  [κ_:=_] : ∀ {lX} → Set lX → I → Pow I lX
+  [κ_:=_] : ∀ {lX} → ★ lX → I → Pow I lX
   [κ_:=_] X i = [ (λ (i : _) → X) := i ]
 \end{code}
 
@@ -581,6 +589,8 @@ Op O N lX lY = Pow O lX → Pow N lY
 \end{code}
 
 \begin{code}
+-- TODO. IsRawFunctor
+
 record RawFunctor {lI}(O N : ★ lI)(lC lD : _) : ★ (S lD ⊔ S lC ⊔ lI) where
   constructor mk
   field
@@ -623,6 +633,10 @@ module NT {lI}{I O : ★ lI} lC lD where
 
   open RawFunctor
 
+  module Alt where
+
+    _nt>_ = λ (F G : RawFunctor (Set^ I lC × I) (Set^ O lC × O) lC lD) → uc ∣ F ∣ ⇛ uc ∣ G ∣
+
   _nt>_ = λ (F G : RawFunctor I O lC lD) → ∀ X → ∣ F ∣ X ⇛ ∣ G ∣ X
 
   natural : (F G : RawFunctor I O lC lD) → F nt> G → ★ _
@@ -634,11 +648,64 @@ module NT {lI}{I O : ★ lI} lC lD where
       isNat : natural F G _<$>_
 \end{code}
 
-TODO. Is the naming correct? Check Hancock's thesis.
+### Monads
+
+\begin{code}
+record IsRawMonad {lI}{I : ★ lI}{lC}(M : Op I I lC lC) : ★ (S lC ⊔ lI) where
+
+  constructor mk
+
+  field
+    η    : ∀ {X i} → X i → M X i
+    _*   : ∀ {A B} → (A ⇛ M B) → M A ⇛ M B
+
+  module API where
+
+    return : ∀ {X} → X ⇛ M X
+    return i = η {i = i}
+
+    join : ∀ {X} i → M (M X) i → M X i
+    join = (λ _ → id) *
+
+    _>>=_ : ∀ {A B i} → M A i → (A ⇛ M B) → M B i
+    m >>= f = (f *) _ m
+
+    _>>_ : ∀ {A B i} → M A i → (∀ i → M B i) → M B i
+    m >> f = m >>= λ i _ → f i
+
+    _=>=_ : ∀ {A B i j} → M [ A := j ] i  →
+                   (A j → M B          j) →
+                          M B          i
+    m =>= f = m >>= λ { ._ (<> , a) → f a }
+
+    rawFunctor : RawFunctor I I lC lC
+    rawFunctor = mk M λ f i x → x >>= λ i x → return _ (f i x)
+
+record RawMonad {lI}(I : ★ lI)(lC : _) : ★ (S lC ⊔ lI) where
+
+  constructor mk
+
+  field
+    ∥_∥     : Op I I lC lC
+    rawMonad : IsRawMonad ∥_∥
+
+  open IsRawMonad rawMonad public hiding (module API)
+
+  module API = IsRawMonad.API rawMonad
+\end{code}
+
+TODO. Consider moving this sort of instances to a module of instances (e.g.: AD.Monad.Instances)
+
+\begin{code}
+instance
+
+  fromIsRawMonad : ∀ {lI}{I : ★ lI}{lC}{M : Op I I lC lC}⦃ _ : IsRawMonad M ⦄ → RawMonad I lC
+  fromIsRawMonad ⦃ m ⦄ = mk _ m
+\end{code}
 
 ## Families (`Fam`)
 
-We keep it as small as `A` thanks to the small identity type.
+We keep `_⁻¹_` as small as the domain thanks to the small identity type.
 
 \begin{code}
 _⁻¹_ : ∀ {lA lB}{A : ★ lA}{B : ★ lB} → (A → B) → Pow B lA -- (lA ⊔ lB)

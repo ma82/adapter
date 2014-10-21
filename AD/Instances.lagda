@@ -53,7 +53,7 @@ module Test2 where
   data N : Set l where ze : N ; su : N → N
 
   exampleRecord : Record
-  exampleRecord = (N , su (su ze)) ∷ (N , ze) ∷ (Two , inl _) ∷ []
+  exampleRecord = (N , su (su ze)) ∷ (N , ze) ∷ (Two , true) ∷ []
 
   open Instances exampleRecord
 
@@ -63,6 +63,6 @@ module Test2 where
   test2 : # ≡ su (su ze)
   test2 = <>
 
-  test3 : # ≡ inl _
+  test3 : # ≡ true
   test3 = <>
 \end{code}
