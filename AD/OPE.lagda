@@ -123,9 +123,10 @@ TODO Implement _>>=Sub_ from _<∷∘_ ?
 \end{code}
 
 \begin{code}
-  lem : ∀ xs → ⟦ const skip xs ⟧Sub ≡ []
-  lem (    []) = <>
-  lem (x ∷ xs) = lem xs
+  private
+    lem : ∀ xs → ⟦ const skip xs ⟧Sub ≡ []
+    lem (    []) = <>
+    lem (x ∷ xs) = lem xs
 
   _<∷∘_ : {xs ys zs : List X} → xs <∷ ys → ys <∷ zs → xs <∷ zs
   _<∷∘_ {[]}     {ys     } {zs} _       _        = const skip zs , lem zs

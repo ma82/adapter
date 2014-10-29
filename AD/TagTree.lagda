@@ -11,6 +11,7 @@ open import AD.Manifest
 module Tree {lA}(A : ★ lA) where
 
   mutual
+
     Tree► = Σ A λ a → Tree▻
 
     data Tree▻ : ★ lA where
@@ -27,7 +28,7 @@ we had only tagged the edges.
 \begin{code}
 module ⟦⟧Tree {lA}{A : ★ lA}{lI : Level} where
 
-  open Tree A ; open Manifest lI {lA}
+  open Tree A ; open Manifest lI
 
   ⟦_⟧Tree▻ : Tree▻ → ★ lI
   ⟦ []                 ⟧Tree▻ = ⊤
@@ -42,13 +43,6 @@ The meaning of a `Tree►` is a set of finite bitstrings. Each of them
 denotes the turns that need to be taken to walk the path from the root
 of the tree to a particular subtree. The set contains the bitstrings
 corresponding to all the subtrees.
-
-While this semantics also contains names from `A`, they are not needed
-at runtime because anything of type `A ∋ a` for some `A` and `a` is
-propositional, hence erasable: the compiler should delete them, and
-probably some of Agda's backends already do (TODO Check... Ask?).
-
-TODO Needed?
 
 \begin{code}
   [_,_]Tree : {l lC : Level}{I : ★ lI}{m n : A}
