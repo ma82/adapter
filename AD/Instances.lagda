@@ -1,13 +1,18 @@
+# Instances
+
+Feeding lists of pointed types to Guillaume's recursive instance
+search machinery.
 
 \begin{code}
 module AD.Instances {l} where
 
 open import AD.Ix; open Ix l; open Search l
-open import AD.Misc
+open import AD.Misc ; open Record★
 \end{code}
 
 \begin{code}
-module Test {A : Set l}(a b c : A) where
+private
+ module Test {A : Set l}(a b c : A) where
 
   example : ⦃ p : a ∈ b ∷ a ∷ c ∷ [] ⦄ → TwoZ
   example ⦃ inl p       , _ ⦄ = inl _
@@ -18,19 +23,10 @@ module Test {A : Set l}(a b c : A) where
   test = <>
 \end{code}
 
-Thanks to Guillaume Brunerie one can now trigger instance search
-through recursive datatypes! :-)
-
-Let's see if we can "open" a "module" or "record".
-
 \begin{code}
 record Instance (X : Set l) : Set l where
   field km : X 
 open Instance public
-
-open Pointed l
-
-Record = List ★∙
 
 module Instances (Xs : Record) where
 
