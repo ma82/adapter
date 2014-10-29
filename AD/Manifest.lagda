@@ -1,10 +1,6 @@
 [2013-2014 Matteo Acerbi](https://www.gnu.org/licenses/gpl.html)
 
-## Manifest type
-
-(aka "singleton").
-
-TODO Check terminology.
+# Manifest
 
 \begin{code}
 module AD.Manifest where
@@ -12,169 +8,151 @@ module AD.Manifest where
 open import AD.Misc
 \end{code}
 
-TODO Fix!
+In this file we try to use ".." irrelevance because we'd like to make
+sure one cannot pattern match on these indices: at the same time,
+however, they must not be all identified by conversion, as would
+happen by using a single dot "."
+
+(This is how Daniel Gustaffson described ".." to me at ICFP: I hope I
+understood correctly, however the feature is not very documented...)
+
+## An *extensible* type of labels
+
+We can mock a type of labels using a type of pointed types.
+
+**Problem**
+
+I cannot do ..x : X.
 
 \begin{code}
-module Manifest lM {lA} where
+-- record Label {lX} : ★ (S lX) where
+--   constructor lbl
+--   field
+--     {X} : ★ lX
+-- --  ..x : X
 \end{code}
 
-For "manifest type" of/for `a` we mean the type corresponding to the
-proposition that a term `a` has type `A`.
+**Problem**
 
-This amounts to requiring something which is already given, so the
-type is uninformative (not just propositional but also contractible):
-we can obtain it as follows.
+Later uses of `lbl` won't require irrelevance.
 
 \begin{code}
-  record _[∋]_ (A : ★ lA)(a : A) : Set lM where
-    constructor []
-
-  ]_[ : ∀ {A : ★ lA}{a} → A [∋] a → A
-  ]_[ {a = a} _ = a
-
-  [[_]] : ∀ {A : ★ lA} → (a : A) → A [∋] a
-  [[ a ]] = []
+data Label {lX} : ★ (S lX) where
+  lbl : {X : ★ lX} → ..(x : X) → Label
 \end{code}
 
-The problem with it being so uninformative, however, is that when we
-pattern match on argument of type `A ∋ a` it completely hides the
-static inhabitant `a`.
+`Label` is a large type, which *might* make some *metaprograms*
+"larger", but shouldn't affect the universe level of *programs*: these
+are meant to only contain inhabitants of `_∋_ Label` (see below), not
+of `Label` itself.
+
+## Manifest type
 
 \begin{code}
-  module Uninformative {A B}(f : A → B){x y : A} where
-
-    example[∋] : (A [∋] x) ⊎ (A [∋] y) → Σ _ (_[∋]_ B)
+module Manifest lM where
 \end{code}
 
-Let's first check that while its untyped version would not be wrong
-but simply not complete, the following does not typecheck and rightly
-so.
+**Problems**
+
+- If I use ..(a : A) → in the formation rule, I can still not do it
+  in the constructor type, or in the following definitions.
+
+- If I use it in both places, I am still not forced to respect this
+  polarity in the following definitions! Also, the universe level must
+  be raised, for no plausible reason...
 
 \begin{code}
-    -- example[∋] (inl l) = , l
-    -- example[∋] (inr r) = , r
-\end{code}
+  data _∋_ {lA}(A : ★ lA) : ..(a : A) → ★ {- (lA ⊔ -} lM where
+    [_] : {- ..(a : A) -} ∀ a → A ∋ a
 
-Thanks to the `η` law for records, any of the following equivalent
-versions just work.
-
-\begin{code}
-    example[∋] (inl _) = f x , []
-    example[∋] (inr _) = f y , []
-
-    -- example[∋] (inl _) = , [[ f x ]]
-    -- example[∋] (inr _) = , [[ f y ]]
-\end{code}
-
-However, we could implement both cases in the wrong way very easily:
-nothing in the lhs gives a hint about what we should be doing (in this
-case this is not enforced by the types).
-
-\begin{code}
-    -- example[∋] (inl []) = f y , []
-    -- example[∋] (inr []) = f x , []
-\end{code}
-
-By the way, will the compiled code be strict? I don't know what Agda's
-current backends would do, but it *could* still be lazy after seeing
-the first bit of the argument.
-
-The problem in the last (wrong) attempts is that we cannot really see
-what we are implementing. We would like to have more contextual
-information about the problem to be solved (TODO cite).
-
-In this environment, we would actually like to be able to pattern
-match as follows.
-
-\begin{code}
---    example[∋] (inl [[ x ]]) = ?
---    example[∋] (inr [[ y ]]) = ?
-\end{code}
-
-But that fails for the reason that `[[_]]` is not a pattern.
-
-We can resort to using another inductive family for this purpose.
-
-\begin{code}
-  data _∋_ (A : ★ lA) : A → ★ lA where
-    [_] : ∀ a → A ∋ a
-
-  [[]] = λ {A : ★ lA}{a : A} → [ a ]
-\end{code}
-
-In standard Agda also `A ∋ a` is contractible.
-
-Now we can construct a more readable version.
-
-\begin{code}
-  module Readable {A B}(f : A → B){x y : A} where
-
-    example∋ : (A ∋ x) ⊎ (A ∋ y) → Σ _ (_∋_ B)
-\end{code}
-
-We can still be lazy on the manifest as before.
-
-\begin{code}
---    example∋ (inl _) = , [ f x ]
---    example∋ (inr _) = , [ f y ]
-
---    example∋ (inl _) = f x , [[]]
---    example∋ (inr _) = f y , [[]]
-\end{code}
-
-If we want to have more readable code, however, we can now pattern
-match more deeply.
-
-\begin{code}
-    example∋ (inl [ .x ]) = f x , [[]]
-    example∋ (inr [ .y ]) = f y , [[]]
-\end{code}
-
-We are not finished.
-
-The main problem of the last implementation of `_∋_` is its possibly
-large size `★ lA`: sometimes we might want to store inhabitants of
-these "unit" types together with other data without ever raising the
-universe level.
-
-We can obtain a (hacky) approximation of this by using the first type
-as a "code" for the latter, except we do not even need to refer to
-that code in the body of the semantic function `>_<`.
-
-\begin{code}
-  >_< : ∀ {A}{a : A} → A [∋] a → A ∋ a
-  >_< _ = [[]]
-\end{code}
-
-Now we can implement the same example as follows.
-
-\begin{code}
-  module Hack {A B}(f : A → B){x y : A} where
-
-    example[∋] : (A [∋] x) ⊎ (A [∋] y) → Σ _ λ b → B [∋] b
-    example[∋] = help ∘ map⊎ >_< >_< where
-      help : A ∋ x ⊎ A ∋ y → Σ _ λ b → B [∋] b
-      help (inl [ .x ]) = f x , []
-      help (inr [ .y ]) = f y , []
-\end{code}
-
-Which is sort of "readable".
-
-The `with` clause does not perform any strict pattern matching, as
-shown by the following definitional equality.
-
-\begin{code}
-    private test : ∀ {l} → example[∋] (inl l) ≡ f x , []
-            test = <>
+  pattern ∙ = [ _ ]
 \end{code}
 
 Some handy helpers.
 
-\begin{code}
-  _[!] : {A : ★ lA} → A → Set lM
-  a [!] = _ [∋] a
+**Problem**
 
-  _+∋_ : {A : ★ lA} → A → A → Set lM
-  nl +∋ nr = nl [!] ⊎ nr [!]
+Shouldn't I be *required* to do ..(a : A) → ..(b : B) → here?
+
+\begin{code}
+  _+∋_ : ∀ {lA}{A : ★ lA}{lB}{B : ★ lB} → ..(a : A) → ..(b : B) → ★ _
+  nl +∋ nr = _ ∋ nl ⊎ _ ∋ nr
+
+  pattern <[_] x = inl [ x ]
+  pattern >[_] y = inr [ y ]
+  pattern <∙     = <[ ._ ]
+  pattern >∙     = >[ ._ ]
 \end{code}
 
+Example use: in pattern matching clauses, the dotted patterns will
+help identify the case!
+
+**Problem**
+
+Same as above.
+
+\begin{code}
+  private
+    module Example {A B : ★Z}(f : A → B){x y : A} where
+
+      example∋ : x +∋ y → Σ _ (_∋_ B)
+      example∋ <[ .x ] = f x , ∙
+      example∋ >[ .y ] = f y , ∙
+\end{code}
+
+This only sums labels.
+
+**Problem**
+
+Shouldn't I be *required* to do ..(a : A) → ..(b : B) → here?
+
+\begin{code}
+  -- _⊎L_ : ∀ {lX}{A : ★ lX}{lY}{B : ★ lY} → ..(a : A) → ..(b : B) → ★ lM
+  _⊎L_ : ∀ {lX}{A : ★ lX}{lY}{B : ★ lY} → A → B → ★ _
+  nl ⊎L nr = lbl nl +∋ lbl nr
+\end{code}
+
+\begin{code}
+  pattern «[_] x = <[ lbl x ]
+  pattern »[_] y = >[ lbl y ]
+
+  pattern «∙     = «[ ._ ]
+  pattern »∙     = »[ ._ ]
+\end{code}
+
+Example usage of manifests with labels.
+
+\begin{code}
+private
+  module LabelsÀLaCarte where
+
+    open Manifest Z
+
+    data ArithLabels : ★Z where
+      val plus : ArithLabels
+
+    data LogicLabels : ★Z where
+      ite eq : LogicLabels
+
+    ex1 : val ⊎L eq
+    ex1 = «[ val ]
+
+    ex2 : val ⊎L eq
+    ex2 = »∙
+\end{code}
+
+**Problem**
+
+Shouldn't I be required to write `..(x : ArithLabels) → _`?
+
+(This is a problem with the definition of `Label`, not of `_∋_`)
+
+\begin{code}
+    pm-on-labels?! : (x : ArithLabels) → Label ∋ lbl x → TwoZ
+    pm-on-labels?! val  x = true
+    pm-on-labels?! plus x = false
+\end{code}
+
+It seems that at the moment we can still pattern match on labels, and
+write "nasty" programs that inspect label arguments: the compiler
+won't be able to erase them, in general.
