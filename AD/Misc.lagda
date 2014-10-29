@@ -774,31 +774,18 @@ open import Data.List public
 module List = Data.List
 \end{code}
 
-### Contexts
-
-We can already describe left-nested (nameless) records,
-i.e. higher-order codes for first-order dependently-typed lists.
-
 \begin{code}
-module Cx {lU}{U : Set lU}{lEl}(El : Pow U lEl) where
+module Record {lU}{lEl}(F : Fam (★ lEl) lU) where
 
-  Cx    :          Pow (List U) (lEl ⊔ lU)
-  ⟦_⟧Cx : ∀ {xs} → Pow (Cx xs ) (lEl ⊔ lU)
+  private U = fst F ; El = snd F
 
-  Cx (    []) = ⊤
-  Cx (x ∷ xs) = Σ (Cx xs) λ xs → ⟦ xs ⟧Cx → U
-  ⟦_⟧Cx {[]}         _  = ⊤
-  ⟦_⟧Cx {_ ∷ _} (Γ , τ) = Σ ⟦ Γ ⟧Cx λ s → El (τ s)
+  RecordType = List    U
+  Record     = List (Σ U El)
 
-  LRecordType = Σ _ Cx
-  LRecord     = Σ LRecordType (⟦_⟧Cx ∘ snd)
+module Record★ {l} = Record {lEl = l} (, id)
 \end{code}
 
 ### □List
-
-As we do not usually need so many dependencies we can obtain a
-(smaller) first-order (cons-)list by induction. We are lifting `List`
-to the category of subsets.
 
 \begin{code}
 □List : ∀ {lI}{I : ★ lI}{lP} → Pow I lP → Pow (List I) lP
@@ -867,7 +854,7 @@ However, we prefer to maintain the built-in support for natural
 numbers, as they support the bidirectional elaboration of numerals and
 have an efficient Integer-based implementation.
 
-So we import the standard library's `Data.Nat`.
+Therefore, we import the standard library's `Data.Nat`.
 
 \begin{code}
 open import Data.Nat public using (ℕ ; zero ; suc ; _+_ ; _*_)
