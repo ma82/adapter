@@ -2,13 +2,6 @@
 
 # Base definitions
 
-TODO <2014-01-08 Wed>
-Modularise some more. E.g., make independent modules for List, Pow, Fam ...
-
-TODO <2013-11-29 Fri>
-Notational convention for indexed things is a bit incoherent.
-Back to trailing slash?
-
 \begin{code}
 module AD.Misc where
 \end{code}
@@ -29,9 +22,9 @@ module Lev = Level
 ## Type
 
 \begin{code}
-module Type l where ★ = Set l
+★ = λ l → Set l
 
-open Type public
+★Z = ★ Z
 \end{code}
 
 ## Dependent product (1)
@@ -56,7 +49,7 @@ nκ x _ = x
 ## Empty type
 
 \begin{code}
-data   ⊥ {l} : ★ l where
+data ⊥ {l} : ★ l where
 ⊥Z = ⊥ {Z}
 
 ¬_ : ∀ {l} → Set l → Set l
@@ -146,8 +139,6 @@ uip = UIP.uip _ _
 
 ### Basic kit for (propositional) equality
 
-TODO Remove cong
-
 \begin{code}
 infixr 5 _$≡_
 
@@ -175,9 +166,6 @@ rew : ∀ {lA}{A : ★ lA}{x y : A}{lB}(B : A → ★ lB) → x ≡ y → B x �
 rew B p = ⟦ p ⟧≡ B
 \end{code}
 
-TODO Remove cong₂
-TODO Derive ap₂ from Σ≡≅≡
-
 \begin{code}
 module _ {lA}{A : Set lA} where
 
@@ -189,24 +177,27 @@ module _ {lA}{A : Set lA} where
   !_ : IsSym (Id A)
   ! <> = <>
 
+import Relation.Binary.EqReasoning as EqR
+module ≡R {X : Set} = EqR (record { Carrier = X
+                                  ; _≈_ = _≡_
+                                  ; isEquivalence = record { refl  = <>
+                                                           ; sym   = !_
+                                                           ; trans = _⊚_ } })
+  hiding (_≡⟨_⟩_) renaming (_≈⟨_⟩_ to _≡⟨_⟩_)
+
 ap₂ : ∀ {lA}{A : ★ lA}{lB}{B : ★ lB}{lC}{C : ★ lC}(f : A → B → C){x w y z} →
       x ≡ y → w ≡ z → f x w ≡ f y z
 ap₂ f <> <> = <>
-
-cong₂ = ap₂
 \end{code}
-
-TODO J.
-TODO Groupoid laws.
 
 ## Isomorphisms
 
 \begin{code}
-record PseudoIso {lA }(A : Set lA)
-                 {l≈A}(_≈A_ : (A → A) → (A → A) → Set l≈A)
-                 {lB }(B : Set lB)
-                 {l≈B}(_≈B_ : (B → B) → (B → B) → Set l≈B)
-                 : Set (lA ⊔ l≈A ⊔ lB ⊔ l≈B) where
+record Iso-ish {lA }(A : Set lA)
+               {l≈A}(_≈A_ : (A → A) → (A → A) → Set l≈A)
+               {lB }(B : Set lB)
+               {l≈B}(_≈B_ : (B → B) → (B → B) → Set l≈B)
+               : Set (lA ⊔ l≈A ⊔ lB ⊔ l≈B) where
   constructor iso
   field to       : A → B
         fr       : B → A
@@ -216,25 +207,28 @@ record PseudoIso {lA }(A : Set lA)
 infix 1 _≅_
 
 _≅_ : ∀ {lA}(A : Set lA){lB}(B : Set lB) → Set (lA ⊔ lB)
-A ≅ B = PseudoIso A _≡_ B _≡_
+A ≅ B = Iso-ish A _≡_ B _≡_
 \end{code}
 
-TODO Define logical equivalence (↔)
-TODO Implement ↔ between propositional types → ≅
- 
 ## Dependent product (2)
 
 \begin{code}
 Π : ∀ {l1}(A : ★ l1){l2}(B : A → ★ l2) → ★ (l1 ⊔ l2)
 Π A B = ∀ a → B a
 
-mapΠ : ∀ {lX lP lQ}{X : ★ lX}{P : X → ★ lP}{Q : X → ★ lQ} →
+Πmap : ∀ {lX lP lQ}{X : ★ lX}{P : X → ★ lP}{Q : X → ★ lQ} →
        (g : ∀ x → P x → Q x) → Π X P → Π X Q
-mapΠ = _ˢ_
+Πmap = _ˢ_
 
-pamΠ : ∀ {lA lB lY}{A : ★ lA}{B : ★ lB}{Y : A → ★ lY} →
+Πpam : ∀ {lA lB lY}{A : ★ lA}{B : ★ lB}{Y : A → ★ lY} →
        (f : B → A) → Π A Y → Π B (Y ∘ f)
-pamΠ f g = g ∘ f
+Πpam f g = g ∘ f
+
+curly : ∀ {lA}{A : Set lA}{lB}{B : A → Set lB} → Π A B → ({x : A} → B x)
+curly f = f _
+
+uncurly : ∀ {lA}{A : Set lA}{lB}{B : A → Set lB} → ({x : A} → B x) → Π A B
+uncurly f _ = f
 \end{code}
 
 ### Dependent product and equality
@@ -244,13 +238,15 @@ module _ {l1}{X : ★ l1}{l2}{Y : X → ★ l2} where
 
   infix 4 _Π≡_
 
-  _Π≡_ : (f g : Π X Y) → ★ _
+  _Π≡_ : (f g : Π X Y) → ★ l1
   f Π≡ g = ∀ x → f x ≡ g x
+
+ΠId = λ {l1}{X : ★ l1}{l2}(Y : X → ★ l2) → _Π≡_ {l1}{X}{l2}{Y}
 
 infix 1 _Π≅_
 
 _Π≅_ : ∀ {lA}(A : Set lA){lB}(B : Set lB) → Set (lA ⊔ lB)
-A Π≅ B = PseudoIso A _Π≡_ B _Π≡_
+A Π≅ B = Iso-ish A _Π≡_ B _Π≡_
 \end{code}
 
 Function extensionality
@@ -265,8 +261,8 @@ x Ext l1 , l2 →≡ y = Ext l1 l2 → x ≡ y
 
 \begin{code}
 _Ext_,_→≅_ : ∀ {lA}(A : Set lA) l1 l2 {lB}(B : Set lB) → Set _
-A Ext l1 , l2 →≅ B = PseudoIso A (λ x y → x Ext l1 , l2 →≡ y)
-                               B (λ x y → x Ext l1 , l2 →≡ y)
+A Ext l1 , l2 →≅ B = Iso-ish A (λ x y → x Ext l1 , l2 →≡ y)
+                             B (λ x y → x Ext l1 , l2 →≡ y)
 \end{code}
 
 \begin{code}
@@ -291,15 +287,15 @@ module Σ = Data.Product
 infix 4 -,_
 pattern -,_ x = _ , x
 
-mapΣ : ∀ {lA lB lP lQ}
+Σmap : ∀ {lA lB lP lQ}
          {A : ★ lA}{B : ★ lB}{P : A → ★ lP}{Q : B → ★ lQ} →
          (f : A → B)(g : ∀ x → P x → Q (f x)) → Σ A P → Σ B Q
-mapΣ f g = Σ.map f (g _)
+Σmap f g = Σ.map f (g _)
 
-map× : ∀ {lA lB lC lD}
+×map : ∀ {lA lB lC lD}
          {A : ★ lA}{B : ★ lB}{C : ★ lC}{D : ★ lD}
          (f : A → B)(g : C → D) → A × C → B × D
-map× f = mapΣ f ∘ κ
+×map f = Σmap f ∘ κ
 \end{code}
 
 ### Binary coproduct
@@ -348,42 +344,37 @@ module _ {lA}{A : ★ lA}{lB}{B : A → ★ lB} where
   ≡→Σ≡       <>  = <> , <>
 
   Σ≡≅≡ : ∀ {p q} → p Σ≡ q Π≅ p ≡ q
-  Σ≡≅≡ = iso Σ≡→≡ ≡→Σ≡ fr∘to (λ _ → uip) where
+  Σ≡≅≡ = iso Σ≡→≡ ≡→Σ≡ fr∘to λ _ → uip where
     fr∘to : ∀ {p q} → ≡→Σ≡ ∘ Σ≡→≡ Π≡ id {A = p Σ≡ q}
     fr∘to (<> , <>) = <>
 \end{code}
 
-## Pointed sets
+## Pointed types
 
 \begin{code}
-module Pointed l where
+★∙ = λ l → Σ (★ l) id
 
-  ★∙ = Σ (★ l) id
+type : ∀ {l} → ★∙ l → Set l
+type = fst
 
-  type : ★∙ → Set l
-  type = fst
-
-  element : (X,x : ★∙) → type X,x
-  element = snd
+element : ∀ {l} → (X,x : ★∙ l) → type X,x
+element = snd
 \end{code}
 
 ### Heterogeneous equality
 
 \begin{code}
 _jm≡_ : ∀ {l}{A B : ★ l} → A → B → Set
-a jm≡ b = Id (Pointed.★∙ _) (, a) (, b)
+a jm≡ b = Id (★∙ _) (, a) (, b)
 \end{code}
 
 ## Predicates (`Pow`)
 
 Contravariant powerset functor.
 
-TODO. Change notation for Pow everywhere... Maybe ★^ ?
-TODO. Remove Set^
-
 \begin{code}
 Pow : ∀ {lX}(X : ★ lX) l → ★ (S l ⊔ lX)
-Pow X l = (x : X) → ★ l
+Pow X l = X → ★ l
 
 Set^  = Pow
 
@@ -395,7 +386,7 @@ _⇨_ : ∀ {l1 l2 l3}{I : ★ l1} → Pow I l2 → Pow I l3 → Pow I _
 _➨_ _⇛_ _⇒_ : ∀ {lI lX lY}{I : ★ lI} → Pow I lX → Pow I lY → ★ _
 F ➨ G = ∀ {X} → (F ⇨ G) X
 X ⇛ Y = Π _ (X ⇨ Y)            
-X ⇒ Y = (p : Σ _ X) → Y (fst p) -- <- Hostile to inference: see Functor⇒ below.
+X ⇒ Y = (p : Σ _ X) → Y (fst p) -- <- Hostile to inference (e.g., in `Functor`)
 
 module _ {lX lY lP lQ : _}{X : ★ lX}{Y : ★ lY} where
 
@@ -410,9 +401,7 @@ module ⇛≅⇒ {lI lX lY}{I : ★ lI}(X : Pow I lX)(Y : Pow I lY) where
   fr∘to : fr ∘ to ≡ id ; fr∘to = <> -- η Σ Π?
 \end{code}
 
-### Dependent functions as indexed functions
-
-TODO. A better name for this?
+### Dependent product as indexed function
 
 \begin{code}
 PowΠ : ∀ {l1 l2}(X : ★ l1) → Pow X l2 → ★ _
@@ -432,6 +421,8 @@ module Π≅PowΠ {lA}(A : ★ lA){lB}(B : Pow A lB) where
 \end{code}
 
 ### `Pow/`
+
+Predicates over indexed types `∀ {i} → X i → Set`.
 
 \begin{code}
 Pow/ : ∀ {lI lX}{I : ★ lI}(X : Pow I lX) lP → ★ (S lP ⊔ lX ⊔ lI)
@@ -576,9 +567,9 @@ Dec = λ {l}(X : Set l) → Σ Dec? λ { yes → X ; no  → ¬ X }
 
 module Dec where
 
-  mappam : ∀ {l}{X Y : Set l} → (X → Y) → (Y → X) → Dec X → Dec Y
-  mappam f g (yes ,  x) = yes , f x
-  mappam f g (no  , ¬x) = no  , ¬x ∘ g
+  mam : ∀ {l}{X Y : Set l} → (X → Y) → (Y → X) → Dec X → Dec Y
+  mam f g (yes ,  x) = yes , f x
+  mam f g (no  , ¬x) = no  , ¬x ∘ g
 \end{code}
 
 ## Functors
@@ -589,8 +580,6 @@ Op O N lX lY = Pow O lX → Pow N lY
 \end{code}
 
 \begin{code}
--- TODO. IsRawFunctor
-
 record RawFunctor {lI}(O N : ★ lI)(lC lD : _) : ★ (S lD ⊔ S lC ⊔ lI) where
   constructor mk
   field
@@ -694,7 +683,8 @@ record RawMonad {lI}(I : ★ lI)(lC : _) : ★ (S lC ⊔ lI) where
   module API = IsRawMonad.API rawMonad
 \end{code}
 
-TODO. Consider moving this sort of instances to a module of instances (e.g.: AD.Monad.Instances)
+TODO. Consider moving this sort of instances to a module of instances
+(e.g.: AD.Monad.Instances)
 
 \begin{code}
 instance
@@ -705,11 +695,12 @@ instance
 
 ## Families (`Fam`)
 
-We keep `_⁻¹_` as small as the domain thanks to the small identity type.
+I defined `_⁻¹_` via equality because, before Ulf's `9a4ebdd`, it used
+to be the only way to keep it small.
 
 \begin{code}
 _⁻¹_ : ∀ {lA lB}{A : ★ lA}{B : ★ lB} → (A → B) → Pow B lA -- (lA ⊔ lB)
-f ⁻¹ b = Σ _ λ a → f a ≡ b  -- lB does not count (anymore)!
+f ⁻¹ b = Σ _ λ a → f a ≡ b
 \end{code}
 
 Covariant powerset functor.
@@ -740,27 +731,16 @@ Lifting via `Fam/` and `Pow/` is available for any `Functor`, but
 levels are not quite right for many purposes.
 
 \begin{code}
-module _ where
+■ : ∀ {lX lI}{O N : ★ lI}(F : Functor O N lX lX)(open Functor) →
+    ∀ {X} → Pow/ X lX → Pow/ (∣ F ∣ X) lX
+■ F = fromFam/ ∘ ,_ ∘ ∣ F ∣map ∘ snd ∘ toFam/
+  where open Functor
 
-  open Functor
-
-  ■ : ∀ {lX lI}{O N : ★ lI}(F : Functor O N lX lX) →
-      ∀ {X} → Pow/ X lX → Pow/ (∣ F ∣ X) lX
-  ■ F = fromFam/ ∘ ,_ ∘ ∣ F ∣map ∘ snd ∘ toFam/
-
-  all■ : ∀ {lX lI : _}{O N : ★ lI}(F : Functor O N lX lX)
-         {X : Pow O lX}{P : Pow/ X lX} → Π _ P → Π _ (■ F P)
-  all■ F m (n , xs) = ∣ F ∣map (λ o x → x , m (o , x)) n xs
-                    , (∣ F ∣map-∘⇛ (n , xs) ⊚ ∣ F ∣map-id⇛ (n , xs))
-\end{code}
-
-### Families as containers
-
-\begin{code}
-Cont = λ lI l → Fam (Set l {- ^op -}) lI
-
-⟦_⟧Cont : ∀ {l lX} → Cont l lX → Set lX → Set (l ⊔ lX)
-⟦ S , P ⟧Cont X = Σ S λ s → P s → X
+all■ : ∀ {lX lI : _}{O N : ★ lI}(F : Functor O N lX lX)(open Functor) →
+       {X : Pow O lX}{P : Pow/ X lX} → Π _ P → Π _ (■ F P)
+all■ F m (n , xs) = ∣ F ∣map (λ o x → x , m (o , x)) n xs
+                  , (∣ F ∣map-∘⇛ (n , xs) ⊚ ∣ F ∣map-id⇛ (n , xs))
+  where open Functor
 \end{code}
 
 ## Abstract nonsense
@@ -769,7 +749,7 @@ Cont = λ lI l → Fam (Set l {- ^op -}) lI
 module ANS {lO}{O : Set lO}{lN}{N : Set lN}(f : O → N){l} where
 
   ΔF : Pow N l → Pow O l
-  ΔF X o = X (f o)
+  ΔF X = X ∘ f
 
   ΣF ΠF : Pow O l → Pow N (l ⊔ lO)
   ΣF X n = Σ (f ⁻¹ n) (X ∘ fst)
@@ -794,18 +774,10 @@ open import Data.List public
 module List = Data.List
 \end{code}
 
-Why do we use lists instead of starting out with natural numbers and
-base the development on normal functors?
-
-The main reason is that we will use lists often and we want to avoid
-the encoding overhead for them.
-
 ### Contexts
 
 We can already describe left-nested (nameless) records,
 i.e. higher-order codes for first-order dependently-typed lists.
-
-(The mutual definition is not necessary but it is nicer).
 
 \begin{code}
 module Cx {lU}{U : Set lU}{lEl}(El : Pow U lEl) where
@@ -817,12 +789,16 @@ module Cx {lU}{U : Set lU}{lEl}(El : Pow U lEl) where
   Cx (x ∷ xs) = Σ (Cx xs) λ xs → ⟦ xs ⟧Cx → U
   ⟦_⟧Cx {[]}         _  = ⊤
   ⟦_⟧Cx {_ ∷ _} (Γ , τ) = Σ ⟦ Γ ⟧Cx λ s → El (τ s)
+
+  LRecordType = Σ _ Cx
+  LRecord     = Σ LRecordType (⟦_⟧Cx ∘ snd)
 \end{code}
 
 ### □List
 
 As we do not usually need so many dependencies we can obtain a
-(smaller) first-order cons-list by induction.
+(smaller) first-order (cons-)list by induction. We are lifting `List`
+to the category of subsets.
 
 \begin{code}
 □List : ∀ {lI}{I : ★ lI}{lP} → Pow I lP → Pow (List I) lP
@@ -840,25 +816,23 @@ module □List {lI}{I : ★ lI}{lP}{P : Pow I lP} where
   module _ {lC}{C : Pow (Σ _ (□List P)) lC} where
 
     elim : C ([] , _) →
-           (∀ x xs p ps → C (xs , ps) → C (x ∷ xs , p , ps)) →
+           (∀ {x xs p ps} → C (xs , ps) → C (x ∷ xs , p , ps)) →
            ∀ x → C x
     elim m[] m∷ ([]     ,      _) = m[]
-    elim m[] m∷ (x ∷ xs , p , ps) = m∷ _ _ _ _ (elim m[] m∷ (xs , ps))
+    elim m[] m∷ (x ∷ xs , p , ps) = m∷ (elim m[] m∷ (xs , ps))
 \end{code}
 
-Star is often useful.
-
-TODO. Prove it isomorphic to the one from the standard library.
+### Star
 
 \begin{code}
 module _ {lA lR : Level}{A : ★ lA} where
 
-  chain : A → A → List A → List (A × A)
-  chain b e []       = (b , e) ∷ []
-  chain b e (x ∷ xs) = (b , x) ∷ chain x e xs
+  chain : List A → A × A → List (A × A) -- a fold!
+  chain []            p  = p ∷ []
+  chain (x ∷ xs) (b , e) = (b , x) ∷ chain xs (x , e)
 
-  _[_]✰_ : A → (A → Pow A lR) → A → Set _
-  x [ R ]✰ y = Σ (List A) (□List (uc R) ∘ chain x y)
+  _[_]✰_ : A → (A → A → ★ lR) → A → ★ _
+  x [ R ]✰ y = Σ (List A) (□List (uc R) ∘ chain § (x , y))
 \end{code}
 
 ## Natural numbers
@@ -866,7 +840,7 @@ module _ {lA lR : Level}{A : ★ lA} where
 We could now use lists as natural numbers.
 
 \begin{code}
-module ℕ=List⊤ where
+module List⊤ where
 
   ℕ = List {Z} ⊤
 
@@ -890,41 +864,44 @@ module ℕ=List⊤ where
 \end{code}
 
 However, we prefer to maintain the built-in support for natural
-numbers (for example, the bidirectional elaboration of numerals), so
-we resort to importing `Data.Nat`.
+numbers, as they support the bidirectional elaboration of numerals and
+have an efficient Integer-based implementation.
+
+So we import the standard library's `Data.Nat`.
 
 \begin{code}
 open import Data.Nat public using (ℕ ; zero ; suc ; _+_ ; _*_)
 module ℕ = Data.Nat
 
-private example : 3 * 2 ≡ 6 ; example = <>
+module _ where private example : 3 * 2 ≡ 6 ; example = <>
 \end{code}
-
-Vectors.
 
 \begin{code}
-toList : ℕ → ℕ=List⊤.ℕ
-toList zero    = ℕ=List⊤.zero
-toList (suc n) = ℕ=List⊤.suc (toList n)
+private
+  module Ex where
+    pattern |0     = ℕ.≤′-refl
+    pattern |1+_ x = ℕ.≤′-step x
 
-Vec = λ {l}(X : Set l) → □List (λ _ → X) ∘ toList
+    example : 0 [ ℕ._≤′_ ]✰ 4
+    example =        1 ∷      2 ∷          4 ∷    []
+            , |1+ |0 , |1+ |0 , |1+ |1+ |0 , |0 , _
 \end{code}
 
-TODO Move somewhere else.
-
-Normal functor codes and their semantics.
+### Vectors
 
 \begin{code}
-Normal : ∀ lA → Set _
-Normal lA = Σ (Set lA) λ A → A → ℕ
+preds : ℕ → List ℕ -- a para
+preds (zero ) = []
+preds (suc n) = n ∷ preds n
 
-⟦_⟧N : ∀ {lA} → Normal lA → ∀ {l} → Set l → Set (l ⊔ lA)
-⟦ A , ∣_∣ ⟧N X = Σ A (Vec X ∘ ∣_∣)
+Down : ∀ {l} → Pow ℕ l → Pow ℕ l
+Down X = □List X ∘ preds
 
--- TODO Fin is in Ix
-module Normal (Fin : ∀ {l} → ℕ → Set l) where
-
-  toCont : ∀ {l} → Normal l → Cont l (S l)
-  toCont (A , ∣_∣) = A , Fin ∘ ∣_∣
+Vec : ∀ {l}(X : Set l) → Pow ℕ l
+Vec = Down ∘ nκ
 \end{code}
 
+\begin{code}
+toList : ℕ → List⊤.ℕ
+toList = ℕ.fold List⊤.zero List⊤.suc
+\end{code}
