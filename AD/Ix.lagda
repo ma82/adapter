@@ -115,6 +115,51 @@ A "large" (unresizable) version of `Ix`.
   Ix→IX {x ∷ xs} (|1  ) = [] , x , xs , <> , <>
   Ix→IX {x ∷ xs} (|0 i) = let ps , y , ss , p = Ix→IX {xs} i in
                           x ∷ ps , y , ss , <> , p
+
+  IX→Ix : ∀ {xs} → IX xs → Ix xs
+  IX→Ix {[]    } (_     , _ , _ , ()    )
+  IX→Ix {._ ∷ _} ([]    , _ , _ , <> , _) = inl _
+  IX→Ix {._ ∷ _} (_ ∷ _ , _ , _ , <> , p) = inr $ IX→Ix (, , , p)
+\end{code}
+
+`Ix` is the compressed version.
+
+\begin{code}
+  private
+    iso₁ : ∀ {xs}(i : Ix xs) → IX→Ix (Ix→IX i) ≡ i
+    iso₁ {[]    }    ()
+    iso₁ {x ∷ xs} (|1  ) = <>
+    iso₁ {x ∷ xs} (|0 i) = inr $≡ iso₁ i
+\end{code}
+
+\begin{code}
+    module _ {lA}{A : Set lA}{lB}{B : A → Set lB}{lC}{C : Σ _ B → Set lC}{lD}{D : Σ _ C → Set lD} where
+
+      private T = (Σ A λ a → Σ (B a) λ b → Σ (C (a , b)) λ c → D ((a , b) , c))
+      _Σ4≡_ : T → T → Set
+      (a , b , c , d) Σ4≡ (e , f , g , h) = a ≡ e × b jm≡ f × c jm≡ g × d jm≡ h
+
+      Σ4≡→≡ : ∀ {x y} → x Σ4≡ y → x ≡ y
+      Σ4≡→≡ (<> , <> , <> , <>) = <>
+
+    iso₂' : ∀ {xs}(i : IX xs) → Ix→IX (IX→Ix {xs} i) Σ4≡ i
+    iso₂' {[]     } (_      , _ ,  _  , ()     )
+    iso₂' {._ ∷ _ } ([]     , _ , ._  , <> , <>) = <> , <> , <> , <>
+    iso₂' {._ ∷ xs} (y ∷ ys , e ,  zs , <> ,  p) =
+      let a , b , c , d = iso₂' {xs} (ys , e , zs , p) in
+        _∷_ y $≡ a
+      , b
+      , c
+      , Σ≡→≡ (_×_ (y ≡ y) $≡ fst (≡→Σ≡ d)
+             , Σ≡→≡ (uip , SplitsAs.propositional {xs = xs} _ _))
+
+    iso₂ : ∀ {xs}(i : IX xs) → Ix→IX (IX→Ix {xs} i) ≡ i
+    iso₂ {xs} = Σ4≡→≡ ∘ iso₂' {xs}
+\end{code}
+
+\begin{code}
+  Ix≅IX : ∀ {xs} → Ix xs Π≅ IX xs
+  Ix≅IX {xs} = iso Ix→IX IX→Ix iso₁ (iso₂ {xs})
 \end{code}
 
 \begin{code}
@@ -147,7 +192,7 @@ A "large" (unresizable) version of `Ix`.
   ⋄List P xs = Σ (Ix xs) (P ∘ lookup)
 \end{code}
 
-We can so define membership, which will also be "small".
+Membership.
 
 \begin{code}
   infix 3 _∈_
@@ -156,32 +201,12 @@ We can so define membership, which will also be "small".
   _∈_ = ⋄List ∘ _≡_
 \end{code}
 
--- \begin{code}
---   |Z : ∀ {x xs} → x ∈ x ∷ xs
---   |Z = |1 , <>
-
---   |S : ∀ {x xs} → x ∈ xs → x ∈ x ∷ xs
---   |S (i , p) = |0 i , p
--- \end{code}
-
 \begin{code}
   ∈[/_] : ∀ {xs x} → (i : Ix xs) → x ∈ [ x / i ]
   ∈[/_] {[]   } ()
   ∈[/_] {_ ∷ _} (|1  ) = |1 , <>
   ∈[/_] {_ ∷ _} (|0 i) = let j , p = ∈[/_] i in |0 j , p
 \end{code}
-
-## Order
-
-A `List X` defines a partial ordering on `X`, which we can define
-thus:
-
-\begin{code}
-  _⊢_<<_ : List X → X → X → Set lI
-  xs ⊢ x << y = Σ (x ∈ xs) (_∈_ y ∘ suffix ∘ fst)
-\end{code}
-
-TODO Prove it is a category.
 
 ## Search
 
@@ -198,7 +223,6 @@ module Search l where
     there : ∀ {lA}{A : Set lA}{x y : A}{xs}⦃ p : x ∈ xs ⦄ → x ∈ (y ∷ xs)
     there ⦃ p ⦄ = S> snd p
 \end{code}
-
 
 ## Fin
 
