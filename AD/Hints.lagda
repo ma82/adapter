@@ -1,10 +1,9 @@
 # Instances
 
-Feeding lists of pointed types to Guillaume's recursive instance
-search machinery.
+Hinting instance search with lists of pointed types.
 
 \begin{code}
-module AD.Instances {l} where
+module AD.Hints {l} where
 
 open import AD.Ix; open Ix l; open Search l
 open import AD.Misc ; open Record★
@@ -30,20 +29,20 @@ record |||_ (X : Set l) : Set l where
   field km : X 
 open |||_ public
 
-module Instances (Xs : Record) where
+module Hints (Xs : Record) where
 
   instance
 
-    inst : ∀ {X x}⦃ p : (X , x) ∈ Xs ⦄ → ||| X
-    inst { x = x } = record { km = x }
+    hint : ∀ {X x}⦃ p : (X , x) ∈ Xs ⦄ → ||| X
+    hint { x = x } = record { km = x }
 
   # : ∀ {X x}⦃ p : (X , x) ∈ Xs ⦄ → X
-  # = km inst
+  # = km hint
 \end{code}
 
-The idea is that now, opening `Instances Xs` for some record `Xs`, we
-can hint instance search with all the pointed types in `Xs`, whatever
-its length.
+The idea is that now, opening `Hints Xs` for some record `Xs`, we can
+hint instance search with all the pointed types in `Xs`, whatever its
+length.
 
 \begin{code}
 module Test2 where
@@ -53,7 +52,7 @@ module Test2 where
   exampleRecord : Record
   exampleRecord = (N , su (su ze)) ∷ (N , ze) ∷ (Two , true) ∷ []
 
-  open Instances exampleRecord
+  open Hints exampleRecord
 
   test1 : # ≡ ze
   test1 = <>

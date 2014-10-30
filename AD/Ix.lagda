@@ -45,8 +45,7 @@ We can check the adequacy of the definition of `SplitsAs`.
     complete {ps = x ∷ ps} <> = <> , complete {ps = ps} <>
 \end{code}
 
-This is actually a consequence of UIP, as the definition uses `_≡_`
-inside...
+Due to UIP, `SplitAs` is a propositional relation.
 
 \begin{code}
     propositional : ∀ {xs ps x ss} → IsProp (xs ≣ ps ++ x ∷ ss)
@@ -56,17 +55,12 @@ inside...
       (_,_ <>) $≡ (propositional {xs}{ps} p q)
 \end{code}
 
-TODO Prove `SplitsAs xs ps x ys ≅ xs ≡ ps ++ x ∷ ss`
-     using `IsProp X → IsProp Y → x ↔ y → x ≅ y`
-
 ## `Ix`
 
 \begin{code}
 pattern |1    = inl _
 pattern |0_ x = inr x
 \end{code}
-
-TODO. Test!
 
 \begin{code}
 pattern Z|    = |1    , <>
@@ -113,10 +107,7 @@ A "large" (unresizable) version of `Ix`.
   IX xs = Σ _ λ ps → Σ _ λ x → Σ _ λ ss → xs ≣ ps ++ x ∷ ss
 \end{code}
 
-`Ix xs` and `IX xs` are isomorphic, but I just need the following
-function, which should have linear ($O(∣xs∣)$) complexity.
-
-TODO Is this efficient?
+`Ix xs` and `IX xs` are isomorphic.
 
 \begin{code}
   Ix→IX : ∀ {xs} → Ix xs → IX xs
