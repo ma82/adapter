@@ -48,6 +48,14 @@ nκ x _ = x
 
 ## Empty type
 
+Impredicative encoding.
+
+\begin{code}
+∅ = λ {l} → {A : Set l} → A
+\end{code}
+
+Predicative version.
+
 \begin{code}
 data ⊥ {l} : ★ l where
 ⊥Z = ⊥ {Z}
@@ -58,7 +66,7 @@ data ⊥ {l} : ★ l where
 ⊥-elim : ∀ {l1 l2}{P : ⊥ → ★ l2} → (x : ⊥ {l1}) → P x
 ⊥-elim ()
 
-magic : ∀ {l1 l2}{A : ★ l2} → ⊥ {l1} → A
+magic : ∀ {l1 l2} → ⊥ {l1} → ∅ {l2}
 magic = ⊥-elim
 \end{code}
 
@@ -201,8 +209,8 @@ record Iso-ish {lA }(A : Set lA)
   constructor iso
   field to       : A → B
         fr       : B → A
-        fr∘to≡id : (fr ∘ to) ≈A id
-        to∘fr≡id : (to ∘ fr) ≈B id
+        fr∘to≈id : (fr ∘ to) ≈A id
+        to∘fr≈id : (to ∘ fr) ≈B id
 
 infix 1 _≅_
 
@@ -296,6 +304,32 @@ pattern -,_ x = _ , x
          {A : ★ lA}{B : ★ lB}{C : ★ lC}{D : ★ lD}
          (f : A → B)(g : C → D) → A × C → B × D
 ×map f = Σmap f ∘ κ
+
+module Σ-ass {lA}{A : Set lA}{lB}{B : A → Set lB}{lC}{C : Σ _ B → Set lC} where
+
+  private
+    L = Σ (Σ A B) λ a,b → C a,b
+    R = Σ A λ a → Σ (B a) λ b → C (a , b)
+
+  nestLR : L → R
+  nestLR ((a , b) , c) = a , b , c
+
+  nestRL : R → L
+  nestRL (a , b , c) = ((a , b) , c)
+
+  ass : L ≅ R
+  ass = iso nestLR nestRL <> <>
+
+open Σ-ass public using (nestLR ; nestRL)
+
+module Curry {lA}{A : Set lA}{lB}{B : A → Set lB}{lC}{C : Σ _ B → Set lC} where
+
+  private
+    L = Π (Σ A B) λ a,b → C a,b
+    R = Π A λ a → Π (B a) λ b → C (a , b)
+
+  currying : Iso-ish L _Π≡_ R (λ f g → ∀ x y → f x y ≡ g x y)
+  currying = iso cu uc (λ _ → <>) (λ _ _ → <>)
 \end{code}
 
 ### Binary coproduct
@@ -315,8 +349,8 @@ TwoZ = Two
 pattern true  = inl _
 pattern false = inr _
 
-pattern «_ x = inl _ , x
-pattern »_ x = inr _ , x
+pattern «_ x = true  , x
+pattern »_ x = false , x
 
 module _ {lX}{X : ★ lX}{lY}{Y : ★ lY}{lZ}{Z : (X ⊎ Y) → ★ lZ} where
 

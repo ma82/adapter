@@ -2,17 +2,12 @@
 
 # Order-preserving embeddings
 
-TODO. Move to AD.Sub or AD.List.Sub or similar, as there are now other
-constructions based on Sub.
-
 \begin{code}
 module AD.OPE where
 
 open import AD.Misc
 open import AD.Ix
 \end{code}
-
-TODO. Patterns for Two instead.
 
 \begin{code}
 data Embed? : Set where keep skip : Embed?
@@ -60,6 +55,9 @@ module _ {l}{X : Set l} where
 
 ## `_<∷_` (OPE)
 
+`_<∷_` is a `Sub`-based reformulation of [order-preserving
+embeddings](http://sneezy.cs.nott.ac.uk/fplunch/weblog/?p=91).
+
 \begin{code}
   infix 4 _<∷_
 
@@ -67,29 +65,13 @@ module _ {l}{X : Set l} where
   xs <∷ ys = Σ (Sub ys) λ < → ⟦ < ⟧Sub ≡ xs
 \end{code}
 
-These morphisms are known as [order-preserving
-embeddings](http://sneezy.cs.nott.ac.uk/fplunch/weblog/?p=91).
-
-TODO Prove they preserve `_⊢_<<_`!
-
-TODO Clean-up
-
-We prefer to obtain OPEs in this way and not by an inductive family
-with two indices because, by also adopting the small equality `_≡_`,
-this allows us to have both the type of order-preserving sublists and
-the one of order-preserving embeddings, independently of the size of
-`X`.
-
-In our encoding of inductive types this will allow OPEs between lists
-of tags of *any* size to be stored together with the data, without
-ever raising any universe level.
-
 ## Properties of `Sub` and `_<∷_`
 
 ### Reflexivity/Identity
 
 \begin{code}
 module _ {l}{X : Set l} where
+
   const : Embed? → (xs : List X) → Sub xs
   const _ []       = tt
   const e (x ∷ xs) = e , const e xs
@@ -106,14 +88,10 @@ module _ {l}{X : Set l} where
 
 ### Transitivity/Composition
 
-TODO Sub seems a *relative* monad, check the details.
-
-TODO Implement _>>=Sub_ from _<∷∘_ ? 
-
 \begin{code}
   _>>=Sub_ : {xs ys : List X} → (s : Sub xs) → xs <∷ ys → Sub ys
 
-  _>>=Sub_ {[]} {ys} _ q = fst q
+  _>>=Sub_ {[]    }{ys} _ q = fst q
   _>>=Sub_ {x ∷ xs}{[]} _ _ = tt
 
   _>>=Sub_ {x ∷ ._}{.x ∷ ys} (keep , q) ((keep , r) , <>) = keep , q >>=Sub (r , <>)
@@ -143,7 +121,7 @@ TODO Implement _>>=Sub_ from _<∷∘_ ?
     (skip , z) , w
 \end{code}
 
-### Relevance
+### Content
 
 Note that this `_<∷_` is not a propositional relation, for example we
 have two different OPEs of type
@@ -152,25 +130,15 @@ have two different OPEs of type
 
 \begin{code}
 private
-  test1 : (1 ∷ 2 ∷ []) <∷ 1 ∷ 1 ∷ 2 ∷ 3 ∷ []
-  test1 = (keep , skip , keep , skip , _) , <>
+  ksks : (1 ∷ 2 ∷ []) <∷ 1 ∷ 1 ∷ 2 ∷ 3 ∷ []
+  ksks = (keep , skip , keep , skip , _) , <>
 
-  test2 : (1 ∷ 2 ∷ []) <∷ 1 ∷ 1 ∷ 2 ∷ 3 ∷ []
-  test2 = (skip , keep , keep , skip , _) , <>
+  skks : (1 ∷ 2 ∷ []) <∷ 1 ∷ 1 ∷ 2 ∷ 3 ∷ []
+  skks = (skip , keep , keep , skip , _) , <>
 \end{code}
 
 \begin{code}
-not-prop : (∀ {l}{X : Set l}{xs ys : List X} → IsProp (xs <∷ ys)) → ⊥Z
-not-prop f with f test1 test2
-not-prop f | ()
+  not-prop : (∀ {l}{X : Set l}{xs ys : List X} → IsProp (xs <∷ ys)) → ⊥Z
+  not-prop f with f ksks skks
+  not-prop f | ()
 \end{code}
-
-TODO Category laws
-
-TODO Antisymmetry should also hold, I guess.
-
-TODO IIRC in some sources (Awodey?) partial orders are required to be
-propositional, so this would not be one. Maybe it would be for lists
-without duplicates: any pair of such lists should admit at most one
-order-preserving embedding.
-
