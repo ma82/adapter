@@ -53,7 +53,12 @@ corresponding to all the subtrees.
 \end{code}
 
 \begin{code}
-pattern injL a b = « a , b
-pattern injR a b = » a , b
+private open module M {l} = Manifest l
+
+pattern inL/ t x = (<∙ , t) , x
+pattern inR/ t x = (>∙ , t) , x
+
+pattern inL a = (<∙ , ._) , a
+pattern inR b = (>∙ , ._) , b
 \end{code}
 
