@@ -24,15 +24,17 @@ private
 \end{code}
 
 \begin{code}
-record Instance (X : Set l) : Set l where
+infix 0 |||_
+
+record |||_ (X : Set l) : Set l where
   field km : X 
-open Instance public
+open |||_ public
 
 module Instances (Xs : Record) where
 
   instance
 
-    inst : ∀ {X x}⦃ p : (X , x) ∈ Xs ⦄ → Instance X
+    inst : ∀ {X x}⦃ p : (X , x) ∈ Xs ⦄ → ||| X
     inst { x = x } = record { km = x }
 
   # : ∀ {X x}⦃ p : (X , x) ∈ Xs ⦄ → X
