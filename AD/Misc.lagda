@@ -199,6 +199,17 @@ ap₂ : ∀ {lA}{A : ★ lA}{lB}{B : ★ lB}{lC}{C : ★ lC}(f : A → B → C){
 ap₂ f <> <> = <>
 \end{code}
 
+\begin{code}
+module J where
+
+  J : ∀ lA lP → Set _
+  J lA lP = {A : Set lA}(P : {x y : A} → x ≡ y → Set lP)
+            (m : ∀ x → P (<> {x = x})){x y : A}(p : x ≡ y) → P p
+
+  j : {lA lP : _} → J lA lP
+  j P m <> = m _
+\end{code}
+
 ## Isomorphisms
 
 \begin{code}
