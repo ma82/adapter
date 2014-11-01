@@ -6,9 +6,9 @@ Assume we have a family of types `A` for agents, indexed by the list
 of tasks of type `T` they are assigned to.
 
 \begin{code}
-open import AD
+open import AD.Misc
 
-module Assignment {lT}{T : Set lT}{lA}(A : List T → Set lA) where
+module AD.Assignment {lT}{T : Set lT}{lA}(A : List T → Set lA) where
 \end{code}
 
 For example `a` is an agent which must carry out tasks `t1` and t2`.
@@ -24,7 +24,7 @@ of agents, a finite map from tasks to agent identifiers, and the
 agent's data for any agent identifier.
 
 \begin{code}
-open Ix Z
+open import AD.Ix ; open Ix Z
 
 Indices : List T → ℕ → Set
 Indices xs n = □List (nκ (Fin n)) xs
@@ -35,15 +35,15 @@ agents, search all occurrences of `j` in `is` and ask for an agent for
 the returned list of tasks.
 
 \begin{code}
-module Alt where
+module Alt {n} where
 
-  getTasks : ∀ {xs : List T}{n} → □List (nκ (Fin n)) xs → Fin n → List T
+  getTasks : ∀ {xs : List T} → □List (nκ (Fin n)) xs → Fin n → List T
   getTasks {[]    } is       j = []
   getTasks {x ∷ xs} (i , is) j with i ≟ j
   getTasks {x ∷ xs} (i , is) j | yes , _ = x ∷ getTasks is j
   getTasks {x ∷ xs} (i , is) j | no  , _ = getTasks is j
 
-  Agents : ∀ {ts n} → (is : Indices ts n) → Set lA
+  Agents : ∀ {ts} → (is : Indices ts n) → Set lA
   Agents is = ∀ j → A (getTasks is j)
 \end{code}
 
@@ -55,7 +55,7 @@ position in the bucket located by `i`.
 
 \begin{code}
 assign : ∀ {ts} n → Indices ts n → Vec (List T) n
-assign n = □List.elim (m[] _) (λ r _ i _ tss → m∷ r _ i tss) ∘ _,_ _ where
+assign n = □List.elim (m[] _) (λ {r}{_}{i} tss → m∷ r _ i tss) ∘ _,_ _ where
   m[] : ∀ n → Vec (List T) n
   m[] zero    = _
   m[] (suc n) = [] , m[] n
@@ -64,17 +64,18 @@ assign n = □List.elim (m[] _) (λ r _ i _ tss → m∷ r _ i tss) ∘ _,_ _ wh
   m∷ r (suc n) (|1  ) (ts , tss) = r ∷ ts , tss
   m∷ r (suc n) (|0 i) (ts , tss) =     ts , m∷ r n i tss
 
-module _ (t1 t2 t3 t4 : T) where
+private
+  module _ (t1 t2 t3 t4 : T) where
 
-  ts = t1 ∷ t2 ∷ t3 ∷ t4 ∷ []
+    ts = t1 ∷ t2 ∷ t3 ∷ t4 ∷ []
 
-  test :   assign {ts = ts} 5 (|0 |1 , |0 |0 |0 |1 , |1 , |0 |1 , tt)
-        ≡ ( t3 ∷ []
-          , t1 ∷ t4 ∷ []
-          , []
-          , t2 ∷ []
-          , _)
-  test = <>
+    test :   assign {ts = ts} 5 (|0 |1 , |0 |0 |0 |1 , |1 , |0 |1 , tt)
+          ≡ ( t3 ∷ []
+            , t1 ∷ t4 ∷ []
+            , []
+            , t2 ∷ []
+            , _)
+    test = <>
 \end{code}
 
 `Agents n is` is a type of `n` agents for the tasks corresponding to
@@ -82,7 +83,7 @@ the indices in `is`.
 
 \begin{code}
 Agents : ∀ {ts} n → (is : Indices ts n) → Set lA
-Agents n is = □List.elim ⊤ (λ _ _ ts tss X → A ts × X)
+Agents n is = □List.elim ⊤ (λ {_}{_}{ts}{tss} X → A ts × X)
                            (_ , assign n is)
 \end{code}
 
