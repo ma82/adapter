@@ -52,6 +52,7 @@ Impredicative encoding.
 
 \begin{code}
 ∅ = λ {l} → {A : Set l} → A
+∅Z = ∅ {Z}
 \end{code}
 
 Predicative version.
