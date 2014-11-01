@@ -395,6 +395,17 @@ module _ {lA}{A : ★ lA}{lB}{B : A → ★ lB} where
     fr∘to (<> , <>) = <>
 \end{code}
 
+Logical equivalence, propositional extensionality.
+
+\begin{code}
+[★] = λ lA → Σ (★ lA) IsProp
+
+_↔_ : ∀ {lA} → [★] lA → [★] lA → ★ lA
+P ↔ Q = (fst P → fst Q) × (fst Q → fst P)
+
+PropExt = λ l → {P Q : [★] l} → P ↔ Q → P ≡ Q
+\end{code}
+
 ## Pointed types
 
 \begin{code}
