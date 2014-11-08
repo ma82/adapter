@@ -233,7 +233,7 @@ A ≅ B = Iso-ish A _≡_ B _≡_
 ## Dependent product (2)
 
 \begin{code}
-Π : ∀ {l1}(A : ★ l1){l2}(B : A → ★ l2) → ★ (l1 ⊔ l2)
+Π : ∀ {l1 l2}(A : ★ l1)(B : A → ★ l2) → ★ (l1 ⊔ l2)
 Π A B = ∀ a → B a
 
 Πmap : ∀ {lX lP lQ}{X : ★ lX}{P : X → ★ lP}{Q : X → ★ lQ} →
@@ -346,8 +346,8 @@ module Curry {lA}{A : Set lA}{lB}{B : A → Set lB}{lC}{C : Σ _ B → Set lC} w
     L = Π (Σ A B) λ a,b → C a,b
     R = Π A λ a → Π (B a) λ b → C (a , b)
 
-  currying : Iso-ish L _Π≡_ R (λ f g → ∀ x y → f x y ≡ g x y)
-  currying = iso cu uc (λ _ → <>) (λ _ _ → <>)
+  currying : L ≅ R
+  currying = iso cu uc <> <>
 \end{code}
 
 ### Binary coproduct
@@ -469,23 +469,14 @@ module ⇛≅⇒ {lI lX lY}{I : ★ lI}(X : Pow I lX)(Y : Pow I lY) where
 \begin{code}
 PowΠ : ∀ {l1 l2}(X : ★ l1) → Pow X l2 → ★ _
 PowΠ A B = nκ ⊤Z ⇒ B
-\end{code}
 
-\begin{code}
-module Π≅PowΠ {lA}(A : ★ lA){lB}(B : Pow A lB) where
-
-  to    : Π A B → PowΠ A B ; to f   = f ∘ fst
-  fr    : PowΠ A B → Π A B ; fr f a = f (a , _)
-  fr∘to : fr ∘ to ≡ id     ; fr∘to  = <>
-  to∘fr : to ∘ fr ≡ id     ; to∘fr  = <>
-
-  Π≅PowΠ : Π A B ≅ PowΠ A B
-  Π≅PowΠ = iso to fr fr∘to to∘fr
+Π≅PowΠ : ∀ {lA lB}{A : ★ lA}{B : Pow A lB} → Π A B ≅ PowΠ A B
+Π≅PowΠ = iso (λ f → f ∘ fst) (λ f a → f (a , _)) <> <>
 \end{code}
 
 ### `Pow/`
 
-Predicates over indexed types `∀ {i} → X i → Set`.
+Indexed predicates.
 
 \begin{code}
 Pow/ : ∀ {lI lX}{I : ★ lI}(X : Pow I lX) lP → ★ (S lP ⊔ lX ⊔ lI)
@@ -788,11 +779,6 @@ fromFam/ : ∀ {lI}{I : ★ lI}{lA}{A : Pow I lA}{lP} → Fam/ A lP → Pow/ A l
 fromFam/ (X , f) (i , a) = f i ⁻¹ a
 \end{code}
 
-`Fam` seems stronger, independently of `_⁻¹_`'s level.
-
-Lifting via `Fam/` and `Pow/` is available for any `Functor`, but
-levels are not quite right for many purposes.
-
 \begin{code}
 ■ : ∀ {lX lI}{O N : ★ lI}(F : Functor O N lX lX)(open Functor) →
     ∀ {X} → Pow/ X lX → Pow/ (∣ F ∣ X) lX
@@ -802,7 +788,7 @@ levels are not quite right for many purposes.
 all■ : ∀ {lX lI : _}{O N : ★ lI}(F : Functor O N lX lX)(open Functor) →
        {X : Pow O lX}{P : Pow/ X lX} → Π _ P → Π _ (■ F P)
 all■ F m (n , xs) = ∣ F ∣map (λ o x → x , m (o , x)) n xs
-                  , (∣ F ∣map-∘⇛ (n , xs) ⊚ ∣ F ∣map-id⇛ (n , xs))
+                  , ∣ F ∣map-∘⇛ (n , xs) ⊚ ∣ F ∣map-id⇛ (n , xs)
   where open Functor
 \end{code}
 
