@@ -439,7 +439,7 @@ Contravariant powerset functor.
 Pow : ∀ {lX}(X : ★ lX) l → ★ (S l ⊔ lX)
 Pow X l = X → ★ l
 
-Set^  = Pow
+★^  = Pow
 
 infixr 2 _➨_ _⇛_ _⇨_
 
@@ -482,7 +482,7 @@ Indexed predicates.
 Pow/ : ∀ {lI lX}{I : ★ lI}(X : Pow I lX) lP → ★ (S lP ⊔ lX ⊔ lI)
 Pow/ X = Pow (Σ _ X)
 
-Set^Σ = Pow/
+★^Σ = Pow/
 
 module _ {lI lX lY lP lQ}{I : ★ lI}{X : Pow I lX}{Y : Pow I lY} where
 
@@ -678,7 +678,7 @@ module NT {lI}{I O : ★ lI} lC lD where
 
   module Alt where
 
-    _nt>_ = λ (F G : RawFunctor (Set^ I lC × I) (Set^ O lC × O) lC lD) → uc ∣ F ∣ ⇛ uc ∣ G ∣
+    _nt>_ = λ (F G : RawFunctor (★^ I lC × I) (★^ O lC × O) lC lD) → uc ∣ F ∣ ⇛ uc ∣ G ∣
 
   _nt>_ = λ (F G : RawFunctor I O lC lD) → ∀ X → ∣ F ∣ X ⇛ ∣ G ∣ X
 
