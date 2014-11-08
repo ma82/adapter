@@ -244,6 +244,12 @@ A ≅ B = Iso-ish A _≡_ B _≡_
        (f : B → A) → Π A Y → Π B (Y ∘ f)
 Πpam f g = g ∘ f
 
+Πpm : ∀ {lA lB lP lQ}{A : ★ lA}{P : A → ★ lP}{B : ★ lB}{Q : B → ★ lQ} →
+        (f : A → B) → {-(Q ∘ f ⇛ P)-} _ → Π B Q → Π A P
+Πpm f g = Πmap g ∘ Πpam f
+\end{code}
+
+\begin{code}
 curly : ∀ {lA}{A : Set lA}{lB}{B : A → Set lB} → Π A B → ({x : A} → B x)
 curly f = f _
 
@@ -307,15 +313,15 @@ module Σ = Data.Product
 infix 4 -,_
 pattern -,_ x = _ , x
 
-Σmap : ∀ {lA lB lP lQ}
-         {A : ★ lA}{B : ★ lB}{P : A → ★ lP}{Q : B → ★ lQ} →
-         (f : A → B)(g : ∀ x → P x → Q (f x)) → Σ A P → Σ B Q
-Σmap f g = Σ.map f (g _)
+Σmm : ∀ {lA lB lP lQ}
+        {A : ★ lA}{B : ★ lB}{P : A → ★ lP}{Q : B → ★ lQ} →
+        (f : A → B)(g : ∀ x → P x → Q (f x)) → Σ A P → Σ B Q
+Σmm f g = Σ.map f (g _)
 
-×map : ∀ {lA lB lC lD}
-         {A : ★ lA}{B : ★ lB}{C : ★ lC}{D : ★ lD}
-         (f : A → B)(g : C → D) → A × C → B × D
-×map f = Σmap f ∘ κ
+×mm : ∀ {lA lB lC lD}
+        {A : ★ lA}{B : ★ lB}{C : ★ lC}{D : ★ lD}
+        (f : A → B)(g : C → D) → A × C → B × D
+×mm f = Σmm f ∘ κ
 
 module Σ-ass {lA}{A : Set lA}{lB}{B : A → Set lB}{lC}{C : Σ _ B → Set lC} where
 
