@@ -89,6 +89,8 @@ module _ {l}{X : Set l} where
 ### Transitivity/Composition
 
 \begin{code}
+  infix 6 _>>=Sub_
+
   _>>=Sub_ : {xs ys : List X} → (s : Sub xs) → xs <∷ ys → Sub ys
 
   _>>=Sub_ {[]    }{ys} _ q = fst q
@@ -105,6 +107,8 @@ module _ {l}{X : Set l} where
     lem : ∀ xs → ⟦ const skip xs ⟧Sub ≡ []
     lem (    []) = <>
     lem (x ∷ xs) = lem xs
+
+  infixr 6 _<∷∘_
 
   _<∷∘_ : {xs ys zs : List X} → xs <∷ ys → ys <∷ zs → xs <∷ zs
   _<∷∘_ {[]}     {ys     } {zs} _       _        = const skip zs , lem zs

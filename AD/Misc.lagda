@@ -1,6 +1,6 @@
 [2013-2014 Matteo Acerbi](https://www.gnu.org/licenses/gpl.html)
 
-# Base definitions
+# Miscellanea
 
 \begin{code}
 module AD.Misc where
@@ -11,10 +11,17 @@ module AD.Misc where
 \begin{code}
 open import Level public
   using    (Level ; _⊔_)
-  renaming (zero to Z ; suc to S ; lift to ↑_ ; lower to ↓_)
-module Lev = Level
+  renaming (zero to Z ; suc to S)
+module Lev = Level renaming (lower to ↓_)
 
-^ = λ {l1} l2 → Level.Lift {l1}{l1 ⊔ l2}
+infixr 7 ↑_ ↓_
+
+^ = λ {l1} l2 → Level.Lift {l1}{l2}
+
+pattern ↑_ a = Lev.lift a
+
+↓_ : ∀ {lA l}{A : Set lA} → ^ l A → A
+↓_ = Lev.↓_
 
 ↥_ = λ {l1 l2} → ^ {l1} l2
 \end{code}
@@ -61,7 +68,7 @@ Predicative version.
 data ⊥ {l} : ★ l where
 ⊥Z = ⊥ {Z}
 
-¬_ : ∀ {l} → Set l → Set l
+¬_ : ∀ {l} → ★ l → ★ l
 ¬ A = A → ⊥Z
 
 ⊥-elim : ∀ {l1 l2}{P : ⊥ → ★ l2} → (x : ⊥ {l1}) → P x
@@ -81,8 +88,20 @@ record ⊤ {l} : ★ l where constructor tt
 ## Relations
 
 \begin{code}
-open import Relation.Binary public using () renaming
+open import Relation.Binary public using (Rel) renaming
   (Reflexive to IsRefl ; Symmetric to IsSym ; Transitive to IsTrans)
+
+module _ {lA lB lR}{A : ★ lA}{B : ★ lB} where
+
+  Rel-pam : ∀ (f : B → A) → Rel A lR → Rel B lR
+  Rel-pam f R x y = R (f x) (f y)
+
+module _ {lA lB lR}{A : ★ lA}{B : ★ lB} where
+
+  Rel→ : Rel B lR → Rel (A → B) _
+  Rel→ R f1 f2 = (a : A) → R (f1 a) (f2 a)
+
+  _[_]Rel→_ = Rel→
 \end{code}
 
 ## Equality (identity type)
@@ -90,7 +109,7 @@ open import Relation.Binary public using () renaming
 Impredicative encoding of equality.
 
 \begin{code}
-_=[_]=_ : ∀ {lA}{A : Set lA} → A → ∀ lB → A → Set (S lB ⊔ lA)
+_=[_]=_ : ∀ {lA}{A : ★ lA} → A → ∀ lB → A → ★ (S lB ⊔ lA)
 x =[ lB ]= y = (B : _ → ★ lB) → B x → B y
 \end{code}
 
@@ -108,23 +127,25 @@ equality.
 \begin{code}
 infix 4 _≡_
 
-data _≡_ {a}{A : Set a}(x : A) : A → Set where
+data _≡_ {a}{A : ★ a}(x : A) : A → ★Z where
   <> : x ≡ x
 
 Id = λ {l}(A : ★ l) → _≡_ {A = A}
+
+infixr 8 ≡_
 ≡_ = _≡_
 \end{code}
 
 We would like to pick only this definition but the `rewrite` machinery
-apparently does not accept (anymore?) small definitions of equality.
+apparently does not accept small definitions of equality.
 
-When needed, we will use the following *resizing* workaround.
+When needed, we will use the following workaround.
 
 \begin{code}
-to== : ∀ {lA}{A : Set lA}{x y : A} → x ≡ y → x == y
+to== : ∀ {lA}{A : ★ lA}{x y : A} → x ≡ y → x == y
 to== <> = refl
 
-from== : ∀ {lA}{A : Set lA}{x y : A} → x == y → x ≡ y
+from== : ∀ {lA}{A : ★ lA}{x y : A} → x == y → x ≡ y
 from== refl = <>
 \end{code}
 
@@ -176,12 +197,14 @@ rew B p = ⟦ p ⟧≡ B
 \end{code}
 
 \begin{code}
-module _ {lA}{A : Set lA} where
+module _ {lA}{A : ★ lA} where
 
   infixr 4 _⊚_
 
   _⊚_ : IsTrans (Id A)
   _⊚_ <> = id
+
+  infixr 5 !_
 
   !_ : IsSym (Id A)
   ! <> = <>
@@ -202,8 +225,8 @@ ap₂ f <> <> = <>
 \begin{code}
 module J where
 
-  J : ∀ lA lP → Set _
-  J lA lP = {A : Set lA}(P : {x y : A} → x ≡ y → Set lP)
+  J : ∀ lA lP → ★ _
+  J lA lP = {A : ★ lA}(P : {x y : A} → x ≡ y → ★ lP)
             (m : ∀ x → P (<> {x = x})){x y : A}(p : x ≡ y) → P p
 
   j : {lA lP : _} → J lA lP
@@ -213,12 +236,12 @@ module J where
 ## Isomorphisms
 
 \begin{code}
-record Iso-ish {lA }(A : Set lA)
-               {l≈A}(_≈A_ : (A → A) → (A → A) → Set l≈A)
-               {lB }(B : Set lB)
-               {l≈B}(_≈B_ : (B → B) → (B → B) → Set l≈B)
-               : Set (lA ⊔ l≈A ⊔ lB ⊔ l≈B) where
-  constructor iso
+record Iso {lA }(A : ★ lA)
+           {l≈A}(_≈A_ : (A → A) → (A → A) → ★ l≈A)
+           {lB }(B : ★ lB)
+           {l≈B}(_≈B_ : (B → B) → (B → B) → ★ l≈B)
+           : ★ (lA ⊔ l≈A ⊔ lB ⊔ l≈B) where
+  constructor mk
   field to       : A → B
         fr       : B → A
         fr∘to≈id : (fr ∘ to) ≈A id
@@ -226,8 +249,8 @@ record Iso-ish {lA }(A : Set lA)
 
 infix 1 _≅_
 
-_≅_ : ∀ {lA}(A : Set lA){lB}(B : Set lB) → Set (lA ⊔ lB)
-A ≅ B = Iso-ish A _≡_ B _≡_
+_≅_ : ∀ {lA}(A : ★ lA){lB}(B : ★ lB) → ★ (lA ⊔ lB)
+A ≅ B = Iso A _≡_ B _≡_
 \end{code}
 
 ## Dependent product (2)
@@ -250,10 +273,10 @@ A ≅ B = Iso-ish A _≡_ B _≡_
 \end{code}
 
 \begin{code}
-curly : ∀ {lA}{A : Set lA}{lB}{B : A → Set lB} → Π A B → ({x : A} → B x)
+curly : ∀ {lA}{A : ★ lA}{lB}{B : A → ★ lB} → Π A B → ({x : A} → B x)
 curly f = f _
 
-uncurly : ∀ {lA}{A : Set lA}{lB}{B : A → Set lB} → ({x : A} → B x) → Π A B
+uncurly : ∀ {lA}{A : ★ lA}{lB}{B : A → ★ lB} → ({x : A} → B x) → Π A B
 uncurly f _ = f
 \end{code}
 
@@ -271,8 +294,8 @@ module _ {l1}{X : ★ l1}{l2}{Y : X → ★ l2} where
 
 infix 1 _Π≅_
 
-_Π≅_ : ∀ {lA}(A : Set lA){lB}(B : Set lB) → Set (lA ⊔ lB)
-A Π≅ B = Iso-ish A _Π≡_ B _Π≡_
+_Π≅_ : ∀ {lA}(A : ★ lA){lB}(B : ★ lB) → ★ (lA ⊔ lB)
+A Π≅ B = Iso A _Π≡_ B _Π≡_
 \end{code}
 
 Function extensionality
@@ -281,19 +304,20 @@ Function extensionality
 Ext : ∀ l1 l2 → ★ (S (l1 ⊔ l2))
 Ext l1 l2 = {X : ★ l1}{Y : X → ★ l2}{f g : Π X Y} → f Π≡ g → f ≡ g
 
-_Ext_,_→≡_ : ∀ {lA}{A : Set lA} (x : A) l1 l2 (y : A) → ★ _
+_Ext_,_→≡_ : ∀ {lA}{A : ★ lA} (x : A) l1 l2 (y : A) → ★ _
 x Ext l1 , l2 →≡ y = Ext l1 l2 → x ≡ y
 \end{code}
 
 \begin{code}
-_Ext_,_→≅_ : ∀ {lA}(A : Set lA) l1 l2 {lB}(B : Set lB) → Set _
-A Ext l1 , l2 →≅ B = Iso-ish A (λ x y → x Ext l1 , l2 →≡ y)
-                             B (λ x y → x Ext l1 , l2 →≡ y)
+_Ext_,_→≅_ : ∀ {lA}(A : ★ lA) l1 l2 {lB}(B : ★ lB) → ★ _
+A Ext l1 , l2 →≅ B = Iso A (λ x y → x Ext l1 , l2 →≡ y)
+                         B (λ x y → x Ext l1 , l2 →≡ y)
 \end{code}
 
 \begin{code}
 ↓ext : ∀ {a₁ b₁} a₂ b₂ → Ext (a₁ ⊔ a₂) (b₁ ⊔ b₂) → Ext a₁ b₁
-↓ext a₂ b₂ ext f≡g = (λ h → ↓_ ∘ h ∘ ↑_) $≡ ext (_$≡_ (↑_ {ℓ = b₂}) ∘ f≡g ∘ ↓_ {ℓ = a₂})
+↓ext a₂ b₂ ext f≡g =
+  (λ h → ↓_ {l = b₂} ∘ h ∘ ↑_) $≡ ext (_$≡_ ↑_ ∘ f≡g ∘ ↓_ {l = a₂})
 
 ext : {{e : ∀ {l1 l2} → Ext l1 l2}} → ∀ {l1 l2} → Ext l1 l2
 ext {{e}} = e
@@ -306,10 +330,12 @@ txe <> _ = <>
 
 \begin{code}
 open import Data.Product public
-  using    (Σ ; ∃ ; _×_ ; _,_ ; ,_)
+  using    (Σ ; _×_ ; _,_ ; ,_)
   renaming (proj₁ to fst ; proj₂ to snd ; curry to cu ; uncurry to uc)
 module Σ = Data.Product
+\end{code}
 
+\begin{code}
 infix 4 -,_
 pattern -,_ x = _ , x
 
@@ -322,8 +348,10 @@ pattern -,_ x = _ , x
         {A : ★ lA}{B : ★ lB}{C : ★ lC}{D : ★ lD}
         (f : A → B)(g : C → D) → A × C → B × D
 ×mm f = Σmm f ∘ κ
+\end{code}
 
-module Σ-ass {lA}{A : Set lA}{lB}{B : A → Set lB}{lC}{C : Σ _ B → Set lC} where
+\begin{code}
+module Σ-ass {lA}{A : ★ lA}{lB}{B : A → ★ lB}{lC}{C : Σ _ B → ★ lC} where
 
   private
     L = Σ (Σ A B) λ a,b → C a,b
@@ -336,18 +364,31 @@ module Σ-ass {lA}{A : Set lA}{lB}{B : A → Set lB}{lC}{C : Σ _ B → Set lC} 
   nestRL (a , b , c) = ((a , b) , c)
 
   ass : L ≅ R
-  ass = iso nestLR nestRL <> <>
+  ass = mk nestLR nestRL <> <>
 
 open Σ-ass public using (nestLR ; nestRL)
+\end{code}
 
-module Curry {lA}{A : Set lA}{lB}{B : A → Set lB}{lC}{C : Σ _ B → Set lC} where
+\begin{code}
+module Curry {lA}{A : ★ lA}{lB}{B : A → ★ lB}{lC}{C : Σ _ B → ★ lC} where
 
   private
-    L = Π (Σ A B) λ a,b → C a,b
-    R = Π A λ a → Π (B a) λ b → C (a , b)
+    L = Π (Σ A B) C
+    R = Π A λ a → Π (B a) (C ∘ ,_)
 
   currying : L ≅ R
-  currying = iso cu uc <> <>
+  currying = mk cu uc <> <>
+\end{code}
+
+\begin{code}
+module Choice {lA}{A : ★ lA}{lB}{B : A → ★ lB}{lC}{C : Σ _ B → ★ lC} where
+
+  private
+    L = Π A λ a → Σ (B a) (C ∘ ,_)
+    R = Σ (Π A B) λ f → Π _ (C ∘ ,_ ∘ f)
+
+  choice : L ≅ R
+  choice = mk (λ f → fst ∘ f , snd ∘ f) (uc λ f g x → f x , g x) <> <>
 \end{code}
 
 ### Binary coproduct
@@ -355,7 +396,7 @@ module Curry {lA}{A : Set lA}{lB}{B : A → Set lB}{lC}{C : Σ _ B → Set lC} w
 \begin{code}
 open import Data.Sum public
   using    (_⊎_)
-  renaming ( inj₁ to inl ; inj₂ to inr ; map to map⊎ )
+  renaming (inj₁ to inl ; inj₂ to inr ; map to map⊎)
 module ⊎ = Data.Sum
 
 Two : ∀ {l} → ★ l
@@ -367,16 +408,19 @@ TwoZ = Two
 pattern true  = inl _
 pattern false = inr _
 
+infixr 7 «_
+infixl 7 »_
+
 pattern «_ x = true  , x
 pattern »_ x = false , x
 
 module _ {lX}{X : ★ lX}{lY}{Y : ★ lY}{lZ}{Z : (X ⊎ Y) → ★ lZ} where
 
- «-inj : {a : X}{b : Z (inl a)}{c : Z (inl a)} → 
+ «-inj : {a : X}{b : Z (inl a)}{c : Z (inl a)} →
          Id (Σ (X ⊎ Y) Z) (inl a , b) (inl a , c) → b ≡ c
  «-inj <> = <>
 
- »-inj : {a : Y}{b : Z (inr a)}{c : Z (inr a)} → 
+ »-inj : {a : Y}{b : Z (inr a)}{c : Z (inr a)} →
          Id (Σ (X ⊎ Y) Z) (inr a , b) (inr a , c) → b ≡ c
  »-inj <> = <>
 \end{code}
@@ -386,7 +430,7 @@ module _ {lX}{X : ★ lX}{lY}{Y : ★ lY}{lZ}{Z : (X ⊎ Y) → ★ lZ} where
 \begin{code}
 module _ {lA}{A : ★ lA}{lB}{B : A → ★ lB} where
 
-  _Σ≡_ : Σ A B → Σ A B → Set _
+  _Σ≡_ : Σ A B → Σ A B → ★ _
   (x , y) Σ≡ (z , w) = Σ (x ≡ z) λ p → rew _ p y ≡ w
 
   Σ≡→≡ : ∀ {p q} → p Σ≡ q → p  ≡ q
@@ -395,13 +439,15 @@ module _ {lA}{A : ★ lA}{lB}{B : A → ★ lB} where
   ≡→Σ≡ : ∀ {p q} → p  ≡ q → p Σ≡ q
   ≡→Σ≡       <>  = <> , <>
 
-  Σ≡≅≡ : ∀ {p q} → p Σ≡ q Π≅ p ≡ q
-  Σ≡≅≡ = iso Σ≡→≡ ≡→Σ≡ fr∘to λ _ → uip where
+  Σ≡≅≡ : ∀ {p q} → (p Σ≡ q) Π≅ (p ≡ q)
+  Σ≡≅≡ = mk Σ≡→≡ ≡→Σ≡ fr∘to to∘fr where
     fr∘to : ∀ {p q} → ≡→Σ≡ ∘ Σ≡→≡ Π≡ id {A = p Σ≡ q}
     fr∘to (<> , <>) = <>
+    to∘fr : ∀ {p q} → Σ≡→≡ ∘ ≡→Σ≡ Π≡ id {A = p ≡ q}
+    to∘fr <> = <>
 \end{code}
 
-Logical equivalence, propositional extensionality.
+Logical equivalence, propositional extensionality
 
 \begin{code}
 [★] = λ lA → Σ (★ lA) IsProp
@@ -409,7 +455,7 @@ Logical equivalence, propositional extensionality.
 _↔_ : ∀ {lA} → [★] lA → [★] lA → ★ lA
 P ↔ Q = (fst P → fst Q) × (fst Q → fst P)
 
-PropExt = λ l → {P Q : [★] l} → P ↔ Q → P ≡ Q
+PropExt = λ l → {P Q : [★] l} → P ↔ Q → P ≡ Q -- empty!
 \end{code}
 
 ## Pointed types
@@ -417,7 +463,7 @@ PropExt = λ l → {P Q : [★] l} → P ↔ Q → P ≡ Q
 \begin{code}
 ★∙ = λ l → Σ (★ l) id
 
-type : ∀ {l} → ★∙ l → Set l
+type : ∀ {l} → ★∙ l → ★ l
 type = fst
 
 element : ∀ {l} → (X,x : ★∙ l) → type X,x
@@ -427,19 +473,25 @@ element = snd
 ### Heterogeneous equality
 
 \begin{code}
+infix 4 _jm≡_
+
 _jm≡_ : ∀ {l}{A B : ★ l} → A → B → Set
 a jm≡ b = Id (★∙ _) (, a) (, b)
+
+Σ≡→jm≡ : ∀ {lA}{A : ★ lA}{lB}{B : A → ★ lB}{p q : Σ A B} → p Σ≡ q → snd p jm≡ snd q
+Σ≡→jm≡ (<> , <>) = <>
+
+jm≡→≡ : ∀ {l}{A B : Set l}{x : A}{y : B} → x jm≡ y → ∀ p → coe p x ≡ y
+jm≡→≡ <> <> = <>
 \end{code}
 
-## Predicates (`Pow`)
-
-Contravariant powerset functor.
+## Contravariant predicates
 
 \begin{code}
 Pow : ∀ {lX}(X : ★ lX) l → ★ (S l ⊔ lX)
 Pow X l = X → ★ l
 
-★^  = Pow
+Pow2 = λ {lX} X l → Pow {lX} (X × X) l
 
 infixr 2 _➨_ _⇛_ _⇨_
 
@@ -448,7 +500,7 @@ _⇨_ : ∀ {l1 l2 l3}{I : ★ l1} → Pow I l2 → Pow I l3 → Pow I _
 
 _➨_ _⇛_ _⇒_ : ∀ {lI lX lY}{I : ★ lI} → Pow I lX → Pow I lY → ★ _
 F ➨ G = ∀ {X} → (F ⇨ G) X
-X ⇛ Y = Π _ (X ⇨ Y)            
+X ⇛ Y = Π _ (X ⇨ Y)
 X ⇒ Y = (p : Σ _ X) → Y (fst p) -- <- Hostile to inference (e.g., in `Functor`)
 
 module _ {lX lY lP lQ : _}{X : ★ lX}{Y : ★ lY} where
@@ -471,7 +523,7 @@ PowΠ : ∀ {l1 l2}(X : ★ l1) → Pow X l2 → ★ _
 PowΠ A B = nκ ⊤Z ⇒ B
 
 Π≅PowΠ : ∀ {lA lB}{A : ★ lA}{B : Pow A lB} → Π A B ≅ PowΠ A B
-Π≅PowΠ = iso (λ f → f ∘ fst) (λ f a → f (a , _)) <> <>
+Π≅PowΠ = mk (λ f → f ∘ fst) (λ f a → f (a , _)) <> <>
 \end{code}
 
 ### `Pow/`
@@ -481,8 +533,6 @@ Indexed predicates.
 \begin{code}
 Pow/ : ∀ {lI lX}{I : ★ lI}(X : Pow I lX) lP → ★ (S lP ⊔ lX ⊔ lI)
 Pow/ X = Pow (Σ _ X)
-
-★^Σ = Pow/
 
 module _ {lI lX lY lP lQ}{I : ★ lI}{X : Pow I lX}{Y : Pow I lY} where
 
@@ -510,8 +560,8 @@ id⇒ = snd
 module _ {lI}{I : ★ lI  }
          {lX}{X : Pow I lX}{lY}{Y : Pow I lY}{lZ}{Z : Pow I lZ} where
 
-  infixr 9 _∘⇒_ _∘⇛_ 
-       
+  infixr 9 _∘⇒_ _∘⇛_
+
   _∘⇒_ : (f : Y ⇒ Z)(g : X ⇒ Y) → X ⇒ Z
   f ∘⇒ g = f ∘ ,_ ∘ g ∘ ,_ ∘ snd
 
@@ -540,7 +590,7 @@ magic/ _ = ⊥-elim
 
 ### Σ and Π over predicates
 
-\begin{code} 
+\begin{code}
 module _ {lI lA lB}{I : ★ lI} where
 
   Σ/ : (A : Pow I lA)(B : Pow/ A lB) → Pow I _
@@ -606,7 +656,7 @@ map⊎/ f g n = map⊎ (f n) (g n)
 module _ {lI}{I : ★ lI} where
 
   [_:=_] : ∀ {lX} → Pow I lX → I → Pow I lX
-  [ X := i ] = ≡ i ×/ X
+  [ X := i ] = (≡ i) ×/ X
 
   [κ_:=_] : ∀ {lX} → ★ lX → I → Pow I lX
   [κ_:=_] X i = [ (λ (i : _) → X) := i ]
@@ -615,15 +665,15 @@ module _ {lI}{I : ★ lI} where
 ## Decidable types
 
 \begin{code}
-data Dec? : Set where yes no : Dec?
+data Dec? : ★Z where yes no : Dec?
 
-Dec = λ {l}(X : Set l) → Σ Dec? λ { yes → X ; no  → ¬ X }
+Dec = λ {l}(X : ★ l) → Σ Dec? λ { yes → X ; no  → ¬ X }
 
 module Dec where
 
-  mam : ∀ {l}{X Y : Set l} → (X → Y) → (Y → X) → Dec X → Dec Y
-  mam f g (yes ,  x) = yes , f x
-  mam f g (no  , ¬x) = no  , ¬x ∘ g
+  invmap : ∀ {l}{X Y : ★ l} → (X → Y) → (Y → X) → Dec X → Dec Y
+  invmap f g (yes ,  x) = yes , f x
+  invmap f g (no  , ¬x) = no  , ¬x ∘ g
 \end{code}
 
 ## Functors
@@ -665,7 +715,7 @@ record FunctorAp {lI}(O N : ★ lI)(lC lD : _) : ★ (S lD ⊔ S lC ⊔ lI) wher
   open Functor F public
 
   field
-    ∣_∣map-ap : {X Y : Pow O lC}{f g : X ⇛ Y} → 
+    ∣_∣map-ap : {X Y : Pow O lC}{f g : X ⇛ Y} →
                f ⇛≡ g → ∣_∣map f ⇛≡ ∣_∣map g
 \end{code}
 
@@ -678,7 +728,7 @@ module NT {lI}{I O : ★ lI} lC lD where
 
   module Alt where
 
-    _nt>_ = λ (F G : RawFunctor (★^ I lC × I) (★^ O lC × O) lC lD) → uc ∣ F ∣ ⇛ uc ∣ G ∣
+    _nt>_ = λ (F G : RawFunctor (Pow I lC × I) (Pow O lC × O) lC lD) → uc ∣ F ∣ ⇛ uc ∣ G ∣
 
   _nt>_ = λ (F G : RawFunctor I O lC lD) → ∀ X → ∣ F ∣ X ⇛ ∣ G ∣ X
 
@@ -710,6 +760,8 @@ record IsRawMonad {lI}{I : ★ lI}{lC}(M : Op I I lC lC) : ★ (S lC ⊔ lI) whe
     join : ∀ {X} i → M (M X) i → M X i
     join = (λ _ → id) *
 
+    infixl 1 _>>=_ _>>_ _=>=_
+
     _>>=_ : ∀ {A B i} → M A i → (A ⇛ M B) → M B i
     m >>= f = (f *) _ m
 
@@ -737,9 +789,6 @@ record RawMonad {lI}(I : ★ lI)(lC : _) : ★ (S lC ⊔ lI) where
   module API = IsRawMonad.API rawMonad
 \end{code}
 
-TODO. Consider moving this sort of instances to a module of instances
-(e.g.: AD.Monad.Instances)
-
 \begin{code}
 instance
 
@@ -747,7 +796,7 @@ instance
   fromIsRawMonad ⦃ m ⦄ = mk _ m
 \end{code}
 
-## Families (`Fam`)
+## Covariant predicates
 
 I defined `_⁻¹_` via equality because, before Ulf's `9a4ebdd`, it used
 to be the only way to keep it small.
@@ -757,11 +806,11 @@ _⁻¹_ : ∀ {lA lB}{A : ★ lA}{B : ★ lB} → (A → B) → Pow B lA -- (lA 
 f ⁻¹ b = Σ _ λ a → f a ≡ b
 \end{code}
 
-Covariant powerset functor.
-
 \begin{code}
 Fam : ∀ {lX}(X : ★ lX)(lS : _) → ★ (S lS ⊔ lX)
 Fam X lS = Σ (★ lS) λ S → S → X
+
+FRel = λ {lX} X l → Fam {lX} (X × X) l
 \end{code}
 
 \begin{code}
@@ -795,7 +844,7 @@ all■ F m (n , xs) = ∣ F ∣map (λ o x → x , m (o , x)) n xs
 ## Abstract nonsense
 
 \begin{code}
-module ANS {lO}{O : Set lO}{lN}{N : Set lN}(f : O → N){l} where
+module ANS {lO}{O : ★ lO}{lN}{N : ★ lN}(f : O → N){l} where
 
   ΔF : Pow N l → Pow O l
   ΔF X = X ∘ f
@@ -868,7 +917,7 @@ module _ {lA lR : Level}{A : ★ lA} where
   chain (x ∷ xs) (b , e) = (b , x) ∷ chain xs (x , e)
 
   _[_]✰_ : A → (A → A → ★ lR) → A → ★ _
-  x [ R ]✰ y = Σ (List A) (□List (uc R) ∘ chain § (x , y))
+  x [ R ]✰ y = Σ (List A) (□List (uc R) ∘ (chain § (x , y)))
 \end{code}
 
 ## Natural numbers
@@ -915,26 +964,14 @@ module _ where private example : 3 * 2 ≡ 6 ; example = <>
 \begin{code}
 private
   module Ex where
+    infix 8 |1+_
+
     pattern |0     = ℕ.≤′-refl
     pattern |1+_ x = ℕ.≤′-step x
 
     example : 0 [ ℕ._≤′_ ]✰ 4
-    example =        1 ∷      2 ∷          4 ∷    []
+    example =      1 ∷      2 ∷          4 ∷    []
             , |1+ |0 , |1+ |0 , |1+ |1+ |0 , |0 , _
-\end{code}
-
-### Vectors
-
-\begin{code}
-preds : ℕ → List ℕ -- a para
-preds (zero ) = []
-preds (suc n) = n ∷ preds n
-
-Down : ∀ {l} → Pow ℕ l → Pow ℕ l
-Down X = □List X ∘ preds
-
-Vec : ∀ {l}(X : Set l) → Pow ℕ l
-Vec = Down ∘ nκ
 \end{code}
 
 \begin{code}

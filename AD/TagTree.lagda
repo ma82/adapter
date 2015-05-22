@@ -55,10 +55,10 @@ corresponding to all the subtrees.
 \begin{code}
 private open module M {l} = Manifest l
 
-pattern inL/ t x = (<∙ , t) , x
-pattern inR/ t x = (>∙ , t) , x
+pattern inL/ t x = (inl ∙ , t) , x
+pattern inR/ t x = (inr ∙ , t) , x
 
-pattern inL a = (<∙ , ._) , a
-pattern inR b = (>∙ , ._) , b
+pattern inL a = (inl ∙ , ._) , a
+pattern inR b = (inr ∙ , ._) , b
 \end{code}
 

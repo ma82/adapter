@@ -17,6 +17,8 @@ the element right after that, and the remaining suffix.
 \begin{code}
 module _ {l}{X : Set l} where
 
+  infix 3 _≣_++_∷_
+
   _≣_++_∷_ : List X → List X → X → List X → Set
   []       ≣ pref     ++ _ ∷ suff = ⊥
   (x ∷ xs) ≣ []       ++ x̂ ∷ suff = x̂ ≡ x × xs ≡ suff
@@ -58,13 +60,15 @@ Due to UIP, `SplitAs` is a propositional relation.
 ## `Ix`
 
 \begin{code}
+infix 8 |0_
+
 pattern |1    = inl _
 pattern |0_ x = inr x
 \end{code}
 
 \begin{code}
-pattern Z|    = |1    , <>
-pattern S>_ p = |0 ._ , p
+pattern Z|    = |1   , <>
+pattern S>_ p = |0 _ , p
 \end{code}
 
 Small (in the sense of "freely resizable") indices into lists.
@@ -150,8 +154,8 @@ A "large" (unresizable) version of `Ix`.
         _∷_ y $≡ a
       , b
       , c
-      , Σ≡→≡ (_×_ (y ≡ y) $≡ fst (≡→Σ≡ d)
-             , Σ≡→≡ (uip , SplitsAs.propositional {xs = xs} _ _))
+      ,   Σ≡→≡ (_×_ (y ≡ y) $≡ fst (≡→Σ≡ d)
+        , Σ≡→≡ (uip , SplitsAs.propositional {xs = xs} _ _))
 
     iso₂ : ∀ {xs}(i : IX xs) → Ix→IX (IX→Ix {xs} i) ≡ i
     iso₂ {xs} = Σ4≡→≡ ∘ iso₂' {xs}
@@ -159,7 +163,7 @@ A "large" (unresizable) version of `Ix`.
 
 \begin{code}
   Ix≅IX : ∀ {xs} → Ix xs Π≅ IX xs
-  Ix≅IX {xs} = iso Ix→IX IX→Ix iso₁ (iso₂ {xs})
+  Ix≅IX {xs} = mk Ix→IX IX→Ix iso₁ (iso₂ {xs})
 \end{code}
 
 \begin{code}
@@ -178,10 +182,12 @@ A "large" (unresizable) version of `Ix`.
   − : ∀ {xs} → Ix xs → List X
   − i = prefix i ++ suffix i
 
-  [_/_] : ∀ {xs} → X → Ix xs → List X
-  [ x / i ] = prefix i ++ x ∷ suffix i
+  infix 7 _[_/_]
 
-  ix[/_] : ∀ {xs x} → (i : Ix xs) → Ix [ x / i ]
+  _[_/_] : ∀ xs → X → Ix xs → List X
+  xs [ x / i ] = prefix i ++ x ∷ suffix i
+
+  ix[/_] : ∀ {xs x} → (i : Ix xs) → Ix (xs [ x / i ])
   ix[/_] {[]    } ()
   ix[/_] {x ∷ xs} (|1  ) = |1
   ix[/_] {x ∷ xs} (|0 i) = |0 (ix[/ i ])
@@ -202,7 +208,7 @@ Membership.
 \end{code}
 
 \begin{code}
-  ∈[/_] : ∀ {xs x} → (i : Ix xs) → x ∈ [ x / i ]
+  ∈[/_] : ∀ {xs x} → (i : Ix xs) → x ∈ xs [ x / i ]
   ∈[/_] {[]   } ()
   ∈[/_] {_ ∷ _} (|1  ) = |1 , <>
   ∈[/_] {_ ∷ _} (|0 i) = let j , p = ∈[/_] i in |0 j , p
